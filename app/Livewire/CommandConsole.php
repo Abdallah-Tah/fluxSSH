@@ -10,15 +10,21 @@ use Livewire\Component;
 class CommandConsole extends Component
 {
     public Server $server;
+
     public string $command = '';
+
     public array $history = [];
+
     public array $output = [];
+
     public bool $connected = false;
+
     public ?string $sessionId = null;
+
     public bool $isLoading = false;
 
     protected $listeners = [
-        'echo:ssh-output,CommandOutput' => 'handleOutput'
+        'echo:ssh-output,CommandOutput' => 'handleOutput',
     ];
 
     public function mount(Server $server): void
@@ -36,17 +42,17 @@ class CommandConsole extends Component
 
         if ($connectionTest['success']) {
             $this->connected = true;
-            $this->addToOutput('Connected to ' . $this->server->getConnectionString(), 'success');
+            $this->addToOutput('Connected to '.$this->server->getConnectionString(), 'success');
 
             // Get server info
             $serverInfo = $sshService->getServerInfo($this->server);
             if ($serverInfo['success']) {
-                $this->addToOutput('System: ' . $serverInfo['system_info'], 'info');
-                $this->addToOutput('Current directory: ' . $serverInfo['current_directory'], 'info');
+                $this->addToOutput('System: '.$serverInfo['system_info'], 'info');
+                $this->addToOutput('Current directory: '.$serverInfo['current_directory'], 'info');
             }
         } else {
             $this->connected = false;
-            $this->addToOutput('Connection failed: ' . $connectionTest['message'], 'error');
+            $this->addToOutput('Connection failed: '.$connectionTest['message'], 'error');
         }
 
         $this->isLoading = false;
@@ -60,7 +66,7 @@ class CommandConsole extends Component
 
         $command = trim($this->command);
         $this->history[] = $command;
-        $this->addToOutput('$ ' . $command, 'command');
+        $this->addToOutput('$ '.$command, 'command');
 
         $this->isLoading = true;
 
@@ -70,7 +76,7 @@ class CommandConsole extends Component
         if ($result['success']) {
             $this->addToOutput($result['output'], 'output');
         } else {
-            $this->addToOutput('Error: ' . $result['error'], 'error');
+            $this->addToOutput($result['error'] ?? 'Unknown error occurred', 'error');
         }
 
         $this->isLoading = false;
@@ -87,9 +93,9 @@ class CommandConsole extends Component
 
         if ($session['success']) {
             $this->sessionId = $session['session_id'];
-            $this->addToOutput('Interactive session started (ID: ' . $this->sessionId . ')', 'success');
+            $this->addToOutput('Interactive session started (ID: '.$this->sessionId.')', 'success');
         } else {
-            $this->addToOutput('Failed to start interactive session: ' . $session['error'], 'error');
+            $this->addToOutput('Failed to start interactive session: '.$session['error'], 'error');
         }
     }
 
@@ -108,7 +114,7 @@ class CommandConsole extends Component
         }
 
         $this->connected = false;
-        $this->addToOutput('Disconnected from ' . $this->server->getConnectionString(), 'info');
+        $this->addToOutput('Disconnected from '.$this->server->getConnectionString(), 'info');
     }
 
     public function handleOutput($data): void
@@ -123,7 +129,7 @@ class CommandConsole extends Component
         $this->output[] = [
             'text' => $text,
             'type' => $type,
-            'timestamp' => now()->format('H:i:s')
+            'timestamp' => now()->format('H:i:s'),
         ];
 
         // Keep only last 1000 lines
