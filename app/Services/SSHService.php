@@ -3,8 +3,8 @@
 namespace App\Services;
 
 use App\Models\Server;
-use Spatie\Ssh\Ssh;
 use Exception;
+use Spatie\Ssh\Ssh;
 
 class SSHService
 {
@@ -21,18 +21,23 @@ class SSHService
         try {
             $ssh = $this->createSshConnection($server);
             $process = $ssh->execute(['echo "Connection successful"']);
-            $output = is_string($process) ? $process : (string) $process;
+
+            // Get output from Process object
+            $stdout = method_exists($process, 'getOutput') ? $process->getOutput() : '';
+            $stderr = method_exists($process, 'getErrorOutput') ? $process->getErrorOutput() : '';
+
+            $output = trim($stdout ?: $stderr);
 
             return [
                 'success' => true,
                 'message' => 'Connection successful',
-                'output' => trim($output)
+                'output' => $output,
             ];
         } catch (Exception $e) {
             return [
                 'success' => false,
                 'message' => $e->getMessage(),
-                'output' => null
+                'output' => null,
             ];
         }
     }
@@ -44,23 +49,43 @@ class SSHService
     {
         try {
             $ssh = $this->createSshConnection($server);
-            $process = $ssh->execute([$command]);
 
-            // Convert process to string output
-            $output = is_string($process) ? $process : (string) $process;
+            // Execute the command and get the result directly as string
+            $result = $ssh->execute([$command]);
+
+            // Spatie SSH returns the process output directly
+            $output = '';
+
+            if (is_object($result)) {
+                // If it's a Process object, get output from it
+                $stdout = method_exists($result, 'getOutput') ? $result->getOutput() : '';
+                $stderr = method_exists($result, 'getErrorOutput') ? $result->getErrorOutput() : '';
+                $output = trim($stdout);
+
+                if (! empty($stderr)) {
+                    $output .= "\n".trim($stderr);
+                }
+
+                $exitCode = method_exists($result, 'getExitCode') ? $result->getExitCode() : 0;
+                $success = $exitCode === 0 || $exitCode === null;
+            } else {
+                // If it's already a string, use it directly
+                $output = trim((string) $result);
+                $success = true;
+            }
 
             return [
-                'success' => true,
+                'success' => $success,
                 'command' => $command,
-                'output' => trim($output),
-                'timestamp' => now()
+                'output' => ! empty($output) ? $output : '(Command executed, no output)',
+                'timestamp' => now(),
             ];
         } catch (Exception $e) {
             return [
                 'success' => false,
                 'command' => $command,
-                'error' => $e->getMessage(),
-                'timestamp' => now()
+                'error' => 'Error: '.$e->getMessage(),
+                'timestamp' => now(),
             ];
         }
     }
@@ -92,6 +117,9 @@ class SSHService
             $ssh->usePrivateKey($server->private_key);
         }
 
+        // Disable strict host key checking for easier connections
+        $ssh->disableStrictHostKeyChecking();
+
         // Set connection options if any
         if ($server->connection_options) {
             foreach ($server->connection_options as $option => $value) {
@@ -119,7 +147,7 @@ class SSHService
         } catch (Exception $e) {
             return [
                 'success' => false,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ];
         }
     }
