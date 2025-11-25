@@ -2,7 +2,20 @@
   "permissions": {
     "allow": [
       "Bash(vendor/bin/pint:*)",
-      "Bash(php artisan test:*)"
+      "Bash(php artisan test:*)",
+      "Bash(php artisan:*)",
+      "Bash(sqlite3:*)",
+      "Bash(npm run build:*)",
+      "Bash(brew install:*)",
+      "Bash(brew link:*)",
+      "Bash(timeout 5 nc:*)",
+      "Bash(nc -zv:*)",
+      "Bash(curl:*)",
+      "Bash(export PATH=\"$HOME/bin:$PATH\")",
+      "Bash(sshpass -p 'amohamed77856701@!' ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@46.62.250.10 'echo \"\"Connection test successful\"\" && hostname')",
+      "Bash(sshpass -p 'amohamed77856701@!' ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@46.62.250.10 'echo \"\"Connection test successful\"\" && hostname && pwd')",
+      "Bash(sudo cp:*)",
+      "Bash(sudo chmod:*)"
     ],
     "deny": [],
     "ask": []

@@ -8,18 +8,18 @@
  * Laravel's SSH services with WhispPHP's interactive shell capabilities.
  */
 
-require_once __DIR__.'/../../vendor/autoload.php';
-require_once __DIR__.'/../../bootstrap/app.php';
+require_once __DIR__ . '/../../vendor/autoload.php';
+require_once __DIR__ . '/../../bootstrap/app.php';
 
 use App\Models\Server;
-use App\Services\SSHService;
+use App\Services\SSH\SSHManager;
 use Illuminate\Support\Facades\Log;
 
 class SSHShellApp
 {
     private $server;
 
-    private $sshService;
+    private $sshManager;
 
     private $sessionId;
 
@@ -32,7 +32,7 @@ class SSHShellApp
     public function __construct($serverId = null)
     {
         $this->sessionId = uniqid('ssh_session_');
-        $this->sshService = new SSHService;
+        $this->sshManager = new SSHManager;
 
         if ($serverId) {
             $this->server = Server::findOrFail($serverId);
@@ -104,14 +104,14 @@ class SSHShellApp
     private function connect(): bool
     {
         try {
-            $result = $this->sshService->testConnection($this->server);
+            $result = $this->sshManager->testConnection($this->server);
 
             if ($result['success']) {
                 $this->isConnected = true;
                 $this->server->update(['last_connected_at' => now()]);
 
                 // Get initial directory
-                $pwdResult = $this->sshService->executeCommand($this->server, 'pwd');
+                $pwdResult = $this->sshManager->executeCommand($this->server, 'pwd');
                 if ($pwdResult['success']) {
                     $this->currentDirectory = trim($pwdResult['output']);
                 }
@@ -170,10 +170,10 @@ class SSHShellApp
 
     private function getShortPath(string $path): string
     {
-        $homeDir = '/home/'.$this->server->username;
+        $homeDir = '/home/' . $this->server->username;
 
         if (str_starts_with($path, $homeDir)) {
-            return '~'.substr($path, strlen($homeDir));
+            return '~' . substr($path, strlen($homeDir));
         }
 
         return $path;
@@ -228,7 +228,7 @@ class SSHShellApp
                 return;
             }
 
-            $result = $this->sshService->executeCommand($this->server, $command);
+            $result = $this->sshManager->executeCommand($this->server, $command);
 
             if ($result['success']) {
                 echo $result['output'];
@@ -246,13 +246,13 @@ class SSHShellApp
                 'success' => $result['success'],
             ]);
         } catch (\Exception $e) {
-            $this->printError('Command execution failed: '.$e->getMessage());
+            $this->printError('Command execution failed: ' . $e->getMessage());
         }
     }
 
     private function handleCdCommand(string $command): void
     {
-        $result = $this->sshService->executeCommand($this->server, $command.' && pwd');
+        $result = $this->sshManager->executeCommand($this->server, $command . ' && pwd');
 
         if ($result['success']) {
             $this->currentDirectory = trim($result['output']);

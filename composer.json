@@ -16,7 +16,7 @@
         "livewire/flux": "^2.1.1",
         "livewire/volt": "^1.7.0",
         "nativephp/mobile": "^1.13",
-        "spatie/ssh": "^1.13",
+        "phpseclib/phpseclib": "~3.0",
         "whispphp/whisp": "^2.0"
     },
     "require-dev": {

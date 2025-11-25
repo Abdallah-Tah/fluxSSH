@@ -3,7 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\Server;
-use App\Services\SSHService;
+use App\Services\SSH\SSHManager;
 use App\Services\WhispBridge;
 use Livewire\Component;
 
@@ -37,22 +37,22 @@ class CommandConsole extends Component
     {
         $this->isLoading = true;
 
-        $sshService = app(SSHService::class);
-        $connectionTest = $sshService->testConnection($this->server);
+        $ssh = app(SSHManager::class);
+        $connectionTest = $ssh->testConnection($this->server);
 
         if ($connectionTest['success']) {
             $this->connected = true;
-            $this->addToOutput('Connected to '.$this->server->getConnectionString(), 'success');
+            $this->addToOutput('Connected to ' . $this->server->getConnectionString(), 'success');
 
             // Get server info
-            $serverInfo = $sshService->getServerInfo($this->server);
+            $serverInfo = $ssh->getServerInfo($this->server);
             if ($serverInfo['success']) {
-                $this->addToOutput('System: '.$serverInfo['system_info'], 'info');
-                $this->addToOutput('Current directory: '.$serverInfo['current_directory'], 'info');
+                $this->addToOutput('System: ' . $serverInfo['system_info'], 'info');
+                $this->addToOutput('Current directory: ' . $serverInfo['current_directory'], 'info');
             }
         } else {
             $this->connected = false;
-            $this->addToOutput('Connection failed: '.$connectionTest['message'], 'error');
+            $this->addToOutput('Connection failed: ' . $connectionTest['message'], 'error');
         }
 
         $this->isLoading = false;
@@ -66,17 +66,18 @@ class CommandConsole extends Component
 
         $command = trim($this->command);
         $this->history[] = $command;
-        $this->addToOutput('$ '.$command, 'command');
+        $this->addToOutput('$ ' . $command, 'command');
 
         $this->isLoading = true;
 
-        $sshService = app(SSHService::class);
-        $result = $sshService->executeCommand($this->server, $command);
+        $ssh = app(SSHManager::class);
+        $result = $ssh->executeCommand($this->server, $command);
 
         if ($result['success']) {
             $this->addToOutput($result['output'], 'output');
         } else {
-            $this->addToOutput($result['error'] ?? 'Unknown error occurred', 'error');
+            $errorOutput = $result['error'] ?? ($result['output'] ?? null) ?? 'Unknown error occurred';
+            $this->addToOutput($errorOutput, 'error');
         }
 
         $this->isLoading = false;
@@ -93,9 +94,9 @@ class CommandConsole extends Component
 
         if ($session['success']) {
             $this->sessionId = $session['session_id'];
-            $this->addToOutput('Interactive session started (ID: '.$this->sessionId.')', 'success');
+            $this->addToOutput('Interactive session started (ID: ' . $this->sessionId . ')', 'success');
         } else {
-            $this->addToOutput('Failed to start interactive session: '.$session['error'], 'error');
+            $this->addToOutput('Failed to start interactive session: ' . $session['error'], 'error');
         }
     }
 
@@ -107,6 +108,10 @@ class CommandConsole extends Component
 
     public function disconnect(): void
     {
+        // Close SSH connection
+        $ssh = app(SSHManager::class);
+        $ssh->closeConnection($this->server);
+
         if ($this->sessionId) {
             $whispBridge = app(WhispBridge::class);
             $whispBridge->closeSession($this->sessionId);
@@ -114,7 +119,7 @@ class CommandConsole extends Component
         }
 
         $this->connected = false;
-        $this->addToOutput('Disconnected from '.$this->server->getConnectionString(), 'info');
+        $this->addToOutput('Disconnected from ' . $this->server->getConnectionString(), 'info');
     }
 
     public function handleOutput($data): void

@@ -1,128 +1,171 @@
-<x-layouts.app :title="__('Dashboard')">
-    <div class="space-y-8">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-                <flux:heading size="xl" class="font-bold tracking-tight">Dashboard</flux:heading>
-                <flux:text class="mt-1 text-gray-500 dark:text-gray-400">Welcome back to your FluxSSH control center.</flux:text>
+<x-layouts.app title="Dashboard">
+    <div class="flex h-full flex-col">
+        <div
+            class="flex items-center justify-between border-b border-zinc-200 bg-white px-6 py-4 dark:border-zinc-700 dark:bg-zinc-900">
+            <div class="flex items-center gap-2">
+                <nav class="flex" aria-label="Breadcrumb">
+                    <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                        <li class="inline-flex items-center">
+                            <a href="{{ route('dashboard') }}"
+                                class="inline-flex items-center text-sm font-medium text-zinc-700 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white">
+                                Dashboard
+                            </a>
+                        </li>
+                        <li>
+                            <div class="flex items-center">
+                                <svg class="w-3 h-3 text-zinc-400 mx-1" aria-hidden="true"
+                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                        stroke-width="2" d="m1 9 4-4-4-4" />
+                                </svg>
+                                <span class="ml-1 text-sm font-medium text-zinc-500 md:ml-2 dark:text-zinc-400">All
+                                    Servers</span>
+                            </div>
+                        </li>
+                    </ol>
+                </nav>
             </div>
-            <div class="flex items-center gap-3">
-                 <flux:button href="{{ route('servers') }}" variant="primary" icon="plus">Add Server</flux:button>
-            </div>
+
+            <a href="{{ route('servers') }}"
+                class="inline-flex items-center justify-center rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200">
+                <svg class="mr-2 -ml-1 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                    fill="currentColor" aria-hidden="true">
+                    <path fill-rule="evenodd"
+                        d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                        clip-rule="evenodd" />
+                </svg>
+                New Server
+            </a>
         </div>
 
-        <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            <!-- SSH Servers Card -->
-            <div class="group relative overflow-hidden bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 transition-all hover:shadow-lg hover:border-blue-500/30 dark:hover:border-blue-500/30">
-                <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                    <flux:icon name="server" class="w-24 h-24 text-blue-500 transform rotate-12 translate-x-4 -translate-y-4" />
-                </div>
-                <div class="relative z-10">
-                    <div class="flex items-center gap-3 mb-4">
-                        <div class="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                            <flux:icon name="server" class="w-6 h-6 text-blue-600 dark:text-blue-400" />
+        <div class="flex-1 p-6">
+            <div class="mb-6 flex items-center justify-between gap-4">
+                <div class="flex flex-1 items-center gap-2">
+                    <div class="relative w-full max-w-sm">
+                        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                            <svg class="h-5 w-5 text-zinc-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                                fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd"
+                                    d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+                                    clip-rule="evenodd" />
+                            </svg>
                         </div>
-                        <flux:heading size="lg">SSH Servers</flux:heading>
+                        <input type="text"
+                            class="block w-full rounded-md border-0 py-1.5 pl-10 text-zinc-900 ring-1 ring-inset ring-zinc-300 placeholder:text-zinc-400 focus:ring-2 focus:ring-inset focus:ring-zinc-600 sm:text-sm sm:leading-6 dark:bg-zinc-800 dark:text-white dark:ring-zinc-700 dark:focus:ring-zinc-500"
+                            placeholder="Search servers... (⌘K)">
                     </div>
-                    <flux:text class="text-gray-600 dark:text-gray-400 mb-6 min-h-[3rem]">
-                        Manage your SSH server connections and access remote terminals securely.
-                    </flux:text>
-                    <flux:button href="{{ route('servers') }}" variant="outline" class="w-full group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20 group-hover:text-blue-600 dark:group-hover:text-blue-400 group-hover:border-blue-200 dark:group-hover:border-blue-800 transition-colors">
-                        Manage Servers
-                    </flux:button>
                 </div>
             </div>
 
-            <!-- Quick Connect Card -->
-            <div class="group relative overflow-hidden bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 transition-all hover:shadow-lg hover:border-green-500/30 dark:hover:border-green-500/30">
-                 <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                    <flux:icon name="power" class="w-24 h-24 text-green-500 transform rotate-12 translate-x-4 -translate-y-4" />
-                </div>
-                <div class="relative z-10">
-                    <div class="flex items-center gap-3 mb-4">
-                         <div class="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                            <flux:icon name="power" class="w-6 h-6 text-green-600 dark:text-green-400" />
-                        </div>
-                        <flux:heading size="lg">Quick Connect</flux:heading>
-                    </div>
-                    <flux:text class="text-gray-600 dark:text-gray-400 mb-6 min-h-[3rem]">
-                        Access your most recently used servers instantly with one click.
-                    </flux:text>
-                    <livewire:quick-connect />
-                </div>
-            </div>
-
-            <!-- Status Card -->
-            <div class="group relative overflow-hidden bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 transition-all hover:shadow-lg hover:border-purple-500/30 dark:hover:border-purple-500/30">
-                 <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                    <flux:icon name="chart-bar" class="w-24 h-24 text-purple-500 transform rotate-12 translate-x-4 -translate-y-4" />
-                </div>
-                <div class="relative z-10">
-                     <div class="flex items-center gap-3 mb-4">
-                         <div class="p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                            <flux:icon name="chart-bar" class="w-6 h-6 text-purple-600 dark:text-purple-400" />
-                        </div>
-                        <flux:heading size="lg">Status</flux:heading>
-                    </div>
-                    <div class="space-y-4 mb-2">
+            <div class="overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700">
+                <table class="min-w-full divide-y divide-zinc-200 dark:divide-zinc-700">
+                    <thead class="bg-zinc-50 dark:bg-zinc-800">
+                        <tr>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider dark:text-zinc-400">
+                                Name</th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider dark:text-zinc-400">
+                                IP Address</th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider dark:text-zinc-400">
+                                Region</th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider dark:text-zinc-400">
+                                Status</th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider dark:text-zinc-400">
+                                CPU</th>
+                            <th scope="col" class="relative px-6 py-3">
+                                <span class="sr-only">Actions</span>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-zinc-200 dark:bg-zinc-900 dark:divide-zinc-700">
                         @php
-                            $totalServers = \App\Models\Server::count();
-                            $activeServers = \App\Models\Server::where('is_active', true)->count();
+                            $servers = \App\Models\Server::all();
+                            if ($servers->isEmpty()) {
+                                $servers = collect([
+                                    (object) [
+                                        'id' => 1,
+                                        'name' => 'prod-web-01',
+                                        'ip_address' => '192.168.1.10',
+                                        'region' => 'NYC1',
+                                        'is_active' => true,
+                                        'cpu_usage' => 45,
+                                    ],
+                                    (object) [
+                                        'id' => 2,
+                                        'name' => 'prod-db-01',
+                                        'ip_address' => '192.168.1.11',
+                                        'region' => 'NYC1',
+                                        'is_active' => true,
+                                        'cpu_usage' => 12,
+                                    ],
+                                    (object) [
+                                        'id' => 3,
+                                        'name' => 'staging-01',
+                                        'ip_address' => '10.0.0.5',
+                                        'region' => 'SFO2',
+                                        'is_active' => false,
+                                        'cpu_usage' => 0,
+                                    ],
+                                    (object) [
+                                        'id' => 4,
+                                        'name' => 'dev-sandbox',
+                                        'ip_address' => '10.0.0.20',
+                                        'region' => 'AMS3',
+                                        'is_active' => true,
+                                        'cpu_usage' => 5,
+                                    ],
+                                ]);
+                            }
                         @endphp
-                        <div class="flex justify-between items-center p-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-                            <flux:text class="text-gray-600 dark:text-gray-400">Total Servers</flux:text>
-                            <flux:badge variant="pill">{{ $totalServers }}</flux:badge>
-                        </div>
-                        <div class="flex justify-between items-center p-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-                            <flux:text class="text-gray-600 dark:text-gray-400">Active Servers</flux:text>
-                            <flux:badge variant="success" class="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">{{ $activeServers }}</flux:badge>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
 
-        <!-- Recent Activity / Getting Started -->
-        <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
-            <div class="flex items-center gap-3 mb-6">
-                <div class="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
-                    <flux:icon name="rocket-launch" class="w-5 h-5 text-gray-700 dark:text-gray-300" />
-                </div>
-                <flux:heading size="lg">Getting Started</flux:heading>
-            </div>
-            
-            <div class="grid gap-4 md:grid-cols-3">
-                <div class="group flex flex-col p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-transparent hover:border-blue-200 dark:hover:border-blue-800 transition-all">
-                    <div class="flex items-center gap-3 mb-2">
-                        <flux:icon name="plus-circle" class="w-5 h-5 text-blue-500" />
-                        <span class="font-medium text-gray-900 dark:text-white">Add Server</span>
-                    </div>
-                    <flux:text class="text-sm mb-4 flex-1">Connect your first SSH server to start managing it.</flux:text>
-                    <flux:button href="{{ route('servers') }}" size="sm" variant="primary" class="w-full justify-center">
-                        Add Server
-                    </flux:button>
-                </div>
-
-                <div class="group flex flex-col p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-transparent hover:border-green-200 dark:hover:border-green-800 transition-all">
-                    <div class="flex items-center gap-3 mb-2">
-                        <flux:icon name="shield-check" class="w-5 h-5 text-green-500" />
-                        <span class="font-medium text-gray-900 dark:text-white">Secure Auth</span>
-                    </div>
-                    <flux:text class="text-sm mb-4 flex-1">Configure password or SSH key authentication.</flux:text>
-                     <div class="mt-auto pt-2 text-xs text-gray-400">
-                        Recommended
-                    </div>
-                </div>
-
-                <div class="group flex flex-col p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-transparent hover:border-purple-200 dark:hover:border-purple-800 transition-all">
-                    <div class="flex items-center gap-3 mb-2">
-                        <flux:icon name="command-line" class="w-5 h-5 text-purple-500" />
-                        <span class="font-medium text-gray-900 dark:text-white">Execute</span>
-                    </div>
-                    <flux:text class="text-sm mb-4 flex-1">Run commands directly from your browser.</flux:text>
-                    <div class="mt-auto pt-2 text-xs text-gray-400">
-                        Terminal access
-                    </div>
-                </div>
+                        @foreach ($servers as $server)
+                            <tr class="group hover:bg-zinc-50 dark:hover:bg-zinc-800/50 cursor-pointer"
+                                onclick="window.location='{{ route('servers.show', $server) }}'">
+                                <td
+                                    class="px-6 py-4 whitespace-nowrap text-sm font-medium text-zinc-900 dark:text-white">
+                                    <a href="{{ route('servers.show', $server) }}"
+                                        class="hover:underline">{{ $server->name }}</a>
+                                </td>
+                                <td
+                                    class="px-6 py-4 whitespace-nowrap text-sm text-zinc-500 font-mono dark:text-zinc-400">
+                                    {{ $server->ip_address }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-500 dark:text-zinc-400">
+                                    {{ $server->region ?? 'NYC1' }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                    @if ($server->is_active)
+                                        <span
+                                            class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20 dark:bg-green-900/30 dark:text-green-400">Online</span>
+                                    @else
+                                        <span
+                                            class="inline-flex items-center rounded-md bg-zinc-50 px-2 py-1 text-xs font-medium text-zinc-600 ring-1 ring-inset ring-zinc-500/10 dark:bg-zinc-400/10 dark:text-zinc-400 dark:ring-zinc-400/20">Offline</span>
+                                    @endif
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-500 dark:text-zinc-400">
+                                    <div class="flex items-center gap-2">
+                                        <div class="h-1.5 w-16 rounded-full bg-zinc-200 dark:bg-zinc-700">
+                                            <div class="h-1.5 rounded-full bg-zinc-900 dark:bg-white"
+                                                style="width: {{ $server->cpu_usage ?? 0 }}%"></div>
+                                        </div>
+                                        <span class="text-xs">{{ $server->cpu_usage ?? 0 }}%</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <a href="#" class="text-zinc-400 hover:text-zinc-900 dark:hover:text-white">
+                                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                                            fill="currentColor" aria-hidden="true">
+                                            <path
+                                                d="M10 3a1.5 1.5 0 110 3 1.5 1.5 0 010-3zM10 8.5a1.5 1.5 0 110 3 1.5 1.5 0 010-3zM11.5 15.5a1.5 1.5 0 10-3 0 1.5 1.5 0 003 0z" />
+                                        </svg>
+                                    </a>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

@@ -3,7 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\Server;
-use App\Services\SSHService;
+use App\Services\SSH\SSHManager;
 use Livewire\Component;
 use Livewire\Attributes\On;
 
@@ -42,8 +42,8 @@ class QuickConnect extends Component
         $server = Server::findOrFail($serverId);
 
         try {
-            $sshService = new SSHService();
-            $result = $sshService->testConnection($server);
+            $ssh = app(SSHManager::class);
+            $result = $ssh->testConnection($server);
 
             if ($result['success']) {
                 // Update last connected timestamp
@@ -52,7 +52,7 @@ class QuickConnect extends Component
                 // Redirect to console
                 $this->redirect(route('console', $server), navigate: true);
             } else {
-                session()->flash('error', 'Failed to connect: ' . $result['error']);
+                session()->flash('error', 'Failed to connect: ' . ($result['message'] ?? 'Unknown error'));
             }
         } catch (\Exception $e) {
             session()->flash('error', 'Connection failed: ' . $e->getMessage());
