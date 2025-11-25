@@ -5,8 +5,9 @@ namespace App\Livewire;
 use App\Models\Server;
 use App\Services\SSH\SSHManager;
 use App\Services\WhispBridge;
-use Livewire\Component;
+use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\On;
+use Livewire\Component;
 
 class CommandConsole extends Component
 {
@@ -44,23 +45,44 @@ class CommandConsole extends Component
     {
         $this->isLoading = true;
 
+        Log::info('[SSH Console] Initializing connection', [
+            'server_id' => $this->server->id,
+            'server_name' => $this->server->name,
+            'host' => $this->server->host,
+        ]);
+
         $ssh = app(SSHManager::class);
         $connectionTest = $ssh->testConnection($this->server);
 
         if ($connectionTest['success']) {
             $this->connected = true;
-            $this->addToOutput('Connected to ' . $this->server->getConnectionString(), 'success');
+            $this->addToOutput('Connected to '.$this->server->getConnectionString(), 'success');
+
+            Log::info('[SSH Console] Connection successful', [
+                'server_id' => $this->server->id,
+            ]);
 
             // Get server info
             $serverInfo = $ssh->getServerInfo($this->server);
             if ($serverInfo['success']) {
-                $this->addToOutput('System: ' . $serverInfo['system_info'], 'info');
+                $this->addToOutput('System: '.$serverInfo['system_info'], 'info');
                 $this->currentDirectory = $serverInfo['current_directory'];
-                $this->addToOutput('Current directory: ' . $this->currentDirectory, 'info');
+                $this->addToOutput('Current directory: '.$this->currentDirectory, 'info');
+
+                Log::info('[SSH Console] Server info retrieved', [
+                    'server_id' => $this->server->id,
+                    'system_info' => $serverInfo['system_info'],
+                    'current_directory' => $this->currentDirectory,
+                ]);
             }
         } else {
             $this->connected = false;
-            $this->addToOutput('Connection failed: ' . $connectionTest['message'], 'error');
+            $this->addToOutput('Connection failed: '.$connectionTest['message'], 'error');
+
+            Log::error('[SSH Console] Connection failed', [
+                'server_id' => $this->server->id,
+                'error' => $connectionTest['message'],
+            ]);
         }
 
         $this->isLoading = false;
@@ -77,12 +99,18 @@ class CommandConsole extends Component
         $this->tabCompletions = [];
         $this->tabIndex = -1;
 
+        Log::info('[SSH Console] Executing command', [
+            'server_id' => $this->server->id,
+            'command' => $command,
+            'current_directory' => $this->currentDirectory,
+        ]);
+
         // Handle cd command to track current directory
         if (preg_match('/^cd\s+(.+)$/', $command, $matches) || $command === 'cd') {
-            $this->addToOutput('$ ' . $command, 'command');
+            $this->addToOutput('$ '.$command, 'command');
             $this->handleCdCommand($command);
         } else {
-            $this->addToOutput('$ ' . $command, 'command');
+            $this->addToOutput('$ '.$command, 'command');
             $this->runCommand($command);
         }
 
@@ -95,14 +123,65 @@ class CommandConsole extends Component
         $this->isLoading = true;
         $ssh = app(SSHManager::class);
 
-        // Execute cd and then pwd to get new directory
-        $result = $ssh->executeCommand($this->server, $command . ' && pwd');
+        // First change to current directory, then execute the cd command, then get pwd
+        $escapedCurrentDir = escapeshellarg($this->currentDirectory);
 
-        if ($result['success']) {
-            $this->currentDirectory = trim($result['output']);
-            $this->addToOutput('', 'output'); // Empty output for cd
+        // Extract the path from the cd command
+        $newPath = trim(preg_replace('/^cd\s*/', '', $command));
+
+        Log::debug('[SSH Console] Handling cd command', [
+            'server_id' => $this->server->id,
+            'original_command' => $command,
+            'extracted_path' => $newPath,
+            'current_directory' => $this->currentDirectory,
+        ]);
+
+        if (empty($newPath)) {
+            // cd with no args goes to home directory
+            $fullCommand = 'cd ~ && pwd';
         } else {
-            $this->addToOutput($result['error'] ?? 'Failed to change directory', 'error');
+            // Escape the new path argument
+            $escapedNewPath = escapeshellarg($newPath);
+            $fullCommand = "cd {$escapedCurrentDir} 2>/dev/null; cd {$escapedNewPath} && pwd";
+        }
+
+        Log::debug('[SSH Console] CD full command', [
+            'full_command' => $fullCommand,
+        ]);
+
+        $result = $ssh->executeCommand($this->server, $fullCommand);
+
+        Log::debug('[SSH Console] CD command result', [
+            'success' => $result['success'],
+            'output' => $result['output'] ?? '',
+            'error' => $result['error'] ?? null,
+        ]);
+
+        if ($result['success'] && ! empty(trim($result['output'] ?? ''))) {
+            $newDirectory = trim($result['output']);
+            $previousDirectory = $this->currentDirectory;
+            $this->currentDirectory = $newDirectory;
+            // Show the new directory
+            $this->addToOutput("Changed to: {$newDirectory}", 'info');
+
+            Log::info('[SSH Console] Directory changed', [
+                'server_id' => $this->server->id,
+                'from' => $previousDirectory,
+                'to' => $newDirectory,
+            ]);
+        } else {
+            // Get error from either error field or output field
+            $error = ! empty($result['error']) ? $result['error'] : ($result['output'] ?? 'Directory not found or permission denied');
+            if (empty(trim($error))) {
+                $error = 'Directory not found or permission denied';
+            }
+            $this->addToOutput($error, 'error');
+
+            Log::warning('[SSH Console] CD command failed', [
+                'server_id' => $this->server->id,
+                'target_path' => $newPath,
+                'error' => $error,
+            ]);
         }
 
         $this->isLoading = false;
@@ -114,17 +193,69 @@ class CommandConsole extends Component
 
         $ssh = app(SSHManager::class);
 
+        // Escape the current directory path properly
+        $escapedDir = escapeshellarg($this->currentDirectory);
+
         // Prepend cd to current directory for each command
-        $fullCommand = "cd {$this->currentDirectory} && {$command}";
+        $fullCommand = "cd {$escapedDir} 2>/dev/null && {$command}";
+
+        Log::debug('[SSH Console] Running command', [
+            'server_id' => $this->server->id,
+            'user_command' => $command,
+            'full_command' => $fullCommand,
+            'current_directory' => $this->currentDirectory,
+        ]);
+
         $result = $ssh->executeCommand($this->server, $fullCommand);
 
+        Log::debug('[SSH Console] Command result', [
+            'server_id' => $this->server->id,
+            'command' => $command,
+            'success' => $result['success'],
+            'output_length' => strlen($result['output'] ?? ''),
+            'has_error' => ! empty($result['error']),
+            'exit_code' => $result['exit_code'] ?? null,
+        ]);
+
+        // In a real terminal, output is shown regardless of exit code
+        // First, show stdout if present
+        $output = $result['output'] ?? '';
+        $hasOutput = ! empty(trim($output));
+
+        if ($hasOutput) {
+            // Determine output type based on success status
+            $outputType = $result['success'] ? 'output' : 'error';
+            $this->addToOutput($output, $outputType);
+        }
+
+        // Then show stderr if present and different from stdout
+        $error = $result['error'] ?? '';
+        if (! empty(trim($error)) && $error !== $output) {
+            $this->addToOutput($error, 'error');
+        }
+
+        // Log the result
         if ($result['success']) {
-            if (!empty($result['output'])) {
-                $this->addToOutput($result['output'], 'output');
-            }
+            Log::info('[SSH Console] Command executed successfully', [
+                'server_id' => $this->server->id,
+                'command' => $command,
+                'output_preview' => $hasOutput ? substr($output, 0, 200) : '(no output)',
+            ]);
         } else {
-            $errorOutput = $result['error'] ?? ($result['output'] ?? 'Unknown error occurred');
-            $this->addToOutput($errorOutput, 'error');
+            $exitCode = $result['exit_code'] ?? 'unknown';
+
+            Log::error('[SSH Console] Command failed', [
+                'server_id' => $this->server->id,
+                'command' => $command,
+                'exit_code' => $exitCode,
+                'output_preview' => $hasOutput ? substr($output, 0, 200) : '(no output)',
+                'error_preview' => ! empty(trim($error)) ? substr($error, 0, 200) : '(no error)',
+            ]);
+
+            // Show exit code for failed commands (if not already obvious)
+            if (! $hasOutput && empty(trim($error))) {
+                $this->addToOutput("Command exited with code: {$exitCode}", 'error');
+            }
         }
 
         $this->isLoading = false;
@@ -135,51 +266,119 @@ class CommandConsole extends Component
      */
     public function tabComplete(): void
     {
-        if (!$this->connected || empty($this->command)) {
+        if (! $this->connected) {
+            Log::debug('[SSH Console] Tab complete skipped - not connected');
+
             return;
         }
+
+        Log::debug('[SSH Console] Tab completion triggered', [
+            'server_id' => $this->server->id,
+            'current_input' => $this->command,
+            'current_directory' => $this->currentDirectory,
+        ]);
 
         $ssh = app(SSHManager::class);
 
         // Parse the command to find what we're completing
-        $parts = explode(' ', $this->command);
-        $lastPart = end($parts);
-        $isFirstWord = count($parts) === 1;
+        $commandText = $this->command ?? '';
+        $parts = preg_split('/\s+/', $commandText, -1, PREG_SPLIT_NO_EMPTY);
+        $lastPart = ! empty($parts) ? end($parts) : '';
+        $isFirstWord = count($parts) <= 1 && ! str_ends_with($commandText, ' ');
+
+        // If command is empty or ends with space, list current directory contents
+        if (empty($lastPart) || str_ends_with($commandText, ' ')) {
+            $escapedDir = escapeshellarg($this->currentDirectory);
+            $result = $ssh->executeCommand(
+                $this->server,
+                "cd {$escapedDir} && ls -1 2>/dev/null | head -30"
+            );
+
+            if ($result['success'] && ! empty($result['output'])) {
+                $completions = array_filter(explode("\n", trim($result['output'])));
+                if (! empty($completions)) {
+                    $this->tabCompletions = $completions;
+                    $this->addToOutput(implode('  ', $completions), 'info');
+                }
+            }
+            $this->dispatch('focusInput');
+
+            return;
+        }
 
         if ($isFirstWord) {
-            // Complete command names
+            // Complete command names using type -a or which fallback
+            $escapedPart = addslashes($lastPart);
             $result = $ssh->executeCommand(
                 $this->server,
-                "compgen -c '{$lastPart}' 2>/dev/null | head -20"
+                "bash -c 'compgen -c \"$escapedPart\"' 2>/dev/null | sort -u | head -20"
             );
+
+            // Fallback to PATH search if compgen fails
+            if (! $result['success'] || empty(trim($result['output'] ?? ''))) {
+                $result = $ssh->executeCommand(
+                    $this->server,
+                    "ls /usr/bin /bin /usr/local/bin 2>/dev/null | grep -i '^{$escapedPart}' | sort -u | head -20"
+                );
+            }
         } else {
             // Complete file/directory names
-            $escapedPart = escapeshellarg($lastPart . '*');
+            $searchPattern = $lastPart;
+
+            // Handle paths with directories
+            $dirname = dirname($lastPart);
+            $basename = basename($lastPart);
+
+            if ($dirname !== '.' && $dirname !== $lastPart) {
+                // User is typing a path like "logs/acc" - complete in that subdirectory
+                $searchDir = $dirname;
+                $searchPattern = $basename;
+            } else {
+                $searchDir = '.';
+                $searchPattern = $lastPart;
+            }
+
+            $escapedPattern = addslashes($searchPattern);
+            $escapedSearchDir = addslashes($searchDir);
+            $escapedCurrentDir = escapeshellarg($this->currentDirectory);
+
             $result = $ssh->executeCommand(
                 $this->server,
-                "cd {$this->currentDirectory} && ls -d {$escapedPart} 2>/dev/null | head -20"
+                "cd {$escapedCurrentDir} && cd \"{$escapedSearchDir}\" 2>/dev/null && ls -1d {$escapedPattern}* 2>/dev/null | head -30"
             );
         }
 
-        if ($result['success'] && !empty($result['output'])) {
-            $completions = array_filter(explode("\n", trim($result['output'])));
+        $output = trim($result['output'] ?? '');
+
+        if ($result['success'] && ! empty($output)) {
+            $completions = array_filter(explode("\n", $output));
 
             if (count($completions) === 1) {
                 // Single match - complete it
                 $completion = $completions[0];
                 if ($isFirstWord) {
-                    $this->command = $completion . ' ';
+                    $this->command = $completion.' ';
                 } else {
+                    // Preserve the path prefix if the user was typing a path
+                    $dirname = dirname($lastPart);
+                    if ($dirname !== '.' && $dirname !== $lastPart) {
+                        $completion = $dirname.'/'.$completion;
+                    }
+
                     array_pop($parts);
                     $parts[] = $completion;
                     $this->command = implode(' ', $parts);
 
-                    // Add trailing slash for directories or space for files
+                    // Check if it's a directory to add trailing slash
+                    $checkPath = ($dirname !== '.' && $dirname !== $lastPart)
+                        ? "{$this->currentDirectory}/{$dirname}/".basename($completion)
+                        : "{$this->currentDirectory}/".$completion;
+
                     $isDir = $ssh->executeCommand(
                         $this->server,
-                        "cd {$this->currentDirectory} && test -d " . escapeshellarg($completion) . " && echo 'dir'"
+                        'test -d '.escapeshellarg($checkPath)." && echo 'dir'"
                     );
-                    if ($isDir['success'] && trim($isDir['output']) === 'dir') {
+                    if ($isDir['success'] && trim($isDir['output'] ?? '') === 'dir') {
                         $this->command .= '/';
                     } else {
                         $this->command .= ' ';
@@ -193,7 +392,13 @@ class CommandConsole extends Component
 
                 // Find common prefix
                 $commonPrefix = $this->findCommonPrefix($completions);
-                if (strlen($commonPrefix) > strlen($lastPart)) {
+                if (strlen($commonPrefix) > strlen(basename($lastPart))) {
+                    // Preserve path prefix
+                    $dirname = dirname($lastPart);
+                    if ($dirname !== '.' && $dirname !== $lastPart) {
+                        $commonPrefix = $dirname.'/'.$commonPrefix;
+                    }
+
                     if ($isFirstWord) {
                         $this->command = $commonPrefix;
                     } else {
@@ -206,6 +411,14 @@ class CommandConsole extends Component
                 // Show completions in output
                 $this->addToOutput(implode('  ', $completions), 'info');
             }
+        } else {
+            // No matches found
+            $this->addToOutput('No completions found', 'info');
+
+            Log::debug('[SSH Console] No tab completions found', [
+                'server_id' => $this->server->id,
+                'search_term' => $lastPart ?? '',
+            ]);
         }
 
         $this->dispatch('focusInput');
@@ -249,6 +462,7 @@ class CommandConsole extends Component
                 }
             }
         }
+
         return $prefix;
     }
 
@@ -259,9 +473,9 @@ class CommandConsole extends Component
 
         if ($session['success']) {
             $this->sessionId = $session['session_id'];
-            $this->addToOutput('Interactive session started (ID: ' . $this->sessionId . ')', 'success');
+            $this->addToOutput('Interactive session started (ID: '.$this->sessionId.')', 'success');
         } else {
-            $this->addToOutput('Failed to start interactive session: ' . $session['error'], 'error');
+            $this->addToOutput('Failed to start interactive session: '.$session['error'], 'error');
         }
     }
 
@@ -273,6 +487,12 @@ class CommandConsole extends Component
 
     public function disconnect(): void
     {
+        Log::info('[SSH Console] Disconnecting', [
+            'server_id' => $this->server->id,
+            'server_name' => $this->server->name,
+            'session_id' => $this->sessionId,
+        ]);
+
         // Close SSH connection
         $ssh = app(SSHManager::class);
         $ssh->closeConnection($this->server);
@@ -284,7 +504,11 @@ class CommandConsole extends Component
         }
 
         $this->connected = false;
-        $this->addToOutput('Disconnected from ' . $this->server->getConnectionString(), 'info');
+        $this->addToOutput('Disconnected from '.$this->server->getConnectionString(), 'info');
+
+        Log::info('[SSH Console] Disconnected successfully', [
+            'server_id' => $this->server->id,
+        ]);
     }
 
     public function handleOutput($data): void
@@ -298,19 +522,38 @@ class CommandConsole extends Component
     {
         // Skip empty output lines for cleaner display
         if ($type === 'output' && empty(trim($text))) {
+            Log::debug('[SSH Console] Skipping empty output line');
+
             return;
         }
 
-        $this->output[] = [
+        $outputEntry = [
             'text' => $text,
             'type' => $type,
             'timestamp' => now()->format('H:i:s'),
         ];
 
+        // Create a new array to ensure Livewire detects the change
+        $newOutput = $this->output;
+        $newOutput[] = $outputEntry;
+
         // Keep only last 1000 lines
-        if (count($this->output) > 1000) {
-            $this->output = array_slice($this->output, -1000);
+        if (count($newOutput) > 1000) {
+            $newOutput = array_slice($newOutput, -1000);
         }
+
+        // Reassign to trigger Livewire reactivity
+        $this->output = $newOutput;
+
+        Log::debug('[SSH Console] Added to output', [
+            'type' => $type,
+            'text_length' => strlen($text),
+            'text_preview' => substr($text, 0, 100),
+            'total_output_lines' => count($this->output),
+        ]);
+
+        // Dispatch scroll event to update terminal view
+        $this->dispatch('scroll-terminal');
     }
 
     public function getCommandHistory(): array
@@ -325,7 +568,7 @@ class CommandConsole extends Component
 
         // Replace home directory with ~
         if (str_starts_with($dir, $home)) {
-            $dir = '~' . substr($dir, strlen($home));
+            $dir = '~'.substr($dir, strlen($home));
         }
 
         return $dir;

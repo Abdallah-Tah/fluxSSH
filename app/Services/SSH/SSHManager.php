@@ -69,11 +69,12 @@ class SSHManager
 
             $result = $connection->execute($command);
 
+            // Return both stdout and stderr to let the caller decide how to handle them
             return [
                 'success' => $result['success'],
                 'command' => $command,
-                'output' => $result['output'] ?: '(Command executed, no output)',
-                'error' => $result['success'] ? null : ($result['stderr'] ?: 'Command failed'),
+                'output' => $result['output'] ?? '',
+                'error' => $result['stderr'] ?? '',
                 'exit_code' => $result['exit_code'],
                 'timestamp' => now(),
             ];
@@ -81,7 +82,7 @@ class SSHManager
             return [
                 'success' => false,
                 'command' => $command,
-                'output' => null,
+                'output' => '',
                 'error' => $e->getMessage(),
                 'exit_code' => -1,
                 'timestamp' => now(),
@@ -98,6 +99,7 @@ class SSHManager
         foreach ($commands as $command) {
             $results[] = $this->executeCommand($server, $command);
         }
+
         return $results;
     }
 
@@ -132,7 +134,7 @@ class SSHManager
     {
         $key = "server_{$server->id}";
 
-        if (!isset($this->connections[$key]) || !$this->connections[$key]->isConnected()) {
+        if (! isset($this->connections[$key]) || ! $this->connections[$key]->isConnected()) {
             $connection = $this->createConnection($server);
             $connection->connect();
             $this->connections[$key] = $connection;

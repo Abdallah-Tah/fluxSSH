@@ -103,15 +103,13 @@
 
             <!-- Terminal Output -->
             <div class="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6 font-mono text-sm leading-relaxed scroll-smooth"
-                id="terminal-output" x-data="{ scrollToBottom() { this.$el.scrollTop = this.$el.scrollHeight; } }" x-init="scrollToBottom()"
+                id="terminal-output" x-data="{ scrollToBottom() { this.$el.scrollTop = this.$el.scrollHeight; } }" x-init="scrollToBottom();
+                $watch('$wire.output', () => setTimeout(() => scrollToBottom(), 50))"
                 @scroll-terminal.window="scrollToBottom()">
 
                 @forelse ($output as $index => $line)
-                    <div class="group flex gap-2 sm:gap-4 py-0.5 sm:py-1 hover:bg-white/2 -mx-2 px-2 rounded transition-colors duration-150"
-                        x-data="{ show: false }" x-init="setTimeout(() => show = true, {{ $index * 10 }})" x-show="show"
-                        x-transition:enter="transition ease-out duration-200"
-                        x-transition:enter-start="opacity-0 translate-y-1"
-                        x-transition:enter-end="opacity-100 translate-y-0">
+                    <div wire:key="output-line-{{ $index }}"
+                        class="group flex gap-2 sm:gap-4 py-0.5 sm:py-1 hover:bg-white/5 -mx-2 px-2 rounded transition-colors duration-150">
                         <span
                             class="text-zinc-700 text-[10px] sm:text-xs font-normal shrink-0 pt-0.5 w-12 sm:w-16 opacity-0 group-hover:opacity-100 transition-opacity select-none">
                             {{ $line['timestamp'] }}
@@ -302,6 +300,8 @@
                 historyIndex: -1,
                 tempCommand: '',
                 history: @json($this->getCommandHistory()),
+                tabPressCount: 0,
+                lastTabTime: 0,
 
                 init() {
                     this.$nextTick(() => {
@@ -312,9 +312,24 @@
                         this.history = [...value].reverse();
                         this.historyIndex = -1;
                     });
+
+                    // Reset tab count when command changes
+                    this.$watch('$wire.command', () => {
+                        this.tabPressCount = 0;
+                    });
                 },
 
                 handleTab() {
+                    // Double-tab detection for showing all completions
+                    const now = Date.now();
+                    if (now - this.lastTabTime < 500) {
+                        this.tabPressCount++;
+                    } else {
+                        this.tabPressCount = 1;
+                    }
+                    this.lastTabTime = now;
+
+                    // Call the Livewire tab completion
                     this.$wire.tabComplete();
                 },
 
@@ -322,13 +337,13 @@
                     if (this.history.length === 0) return;
 
                     if (this.historyIndex === -1) {
-                        this.tempCommand = this.$wire.command;
+                        this.tempCommand = this.$wire.command || '';
                         this.historyIndex = 0;
                     } else if (this.historyIndex < this.history.length - 1) {
                         this.historyIndex++;
                     }
 
-                    this.$wire.set('command', this.history[this.historyIndex]);
+                    this.$wire.set('command', this.history[this.historyIndex] || '');
                 },
 
                 nextCommand() {
@@ -336,16 +351,17 @@
 
                     if (this.historyIndex > 0) {
                         this.historyIndex--;
-                        this.$wire.set('command', this.history[this.historyIndex]);
+                        this.$wire.set('command', this.history[this.historyIndex] || '');
                     } else {
                         this.historyIndex = -1;
-                        this.$wire.set('command', this.tempCommand);
+                        this.$wire.set('command', this.tempCommand || '');
                     }
                 },
 
                 handleCtrlC() {
                     this.$wire.set('command', '');
                     this.historyIndex = -1;
+                    this.tabPressCount = 0;
                 },
 
                 handleCtrlL() {
@@ -357,8 +373,22 @@
         document.addEventListener('livewire:init', () => {
             Livewire.on('focusInput', () => {
                 setTimeout(() => {
-                    document.querySelector('input[wire\\:model\\.live="command"]')?.focus();
+                    const input = document.querySelector('input[wire\\:model\\.live="command"]');
+                    if (input) {
+                        input.focus();
+                        // Move cursor to end
+                        input.setSelectionRange(input.value.length, input.value.length);
+                    }
                 }, 100);
+            });
+
+            Livewire.on('scroll-terminal', () => {
+                setTimeout(() => {
+                    const terminal = document.getElementById('terminal-output');
+                    if (terminal) {
+                        terminal.scrollTop = terminal.scrollHeight;
+                    }
+                }, 50);
             });
         });
 
@@ -367,7 +397,9 @@
         }) => {
             const terminal = document.getElementById('terminal-output');
             if (terminal) {
-                terminal.scrollTop = terminal.scrollHeight;
+                setTimeout(() => {
+                    terminal.scrollTop = terminal.scrollHeight;
+                }, 50);
             }
         });
     </script>
