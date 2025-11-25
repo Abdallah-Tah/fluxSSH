@@ -104,11 +104,11 @@
             <!-- Terminal Output -->
             <div class="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6 font-mono text-sm leading-relaxed scroll-smooth"
                 id="terminal-output" x-data="{ scrollToBottom() { this.$el.scrollTop = this.$el.scrollHeight; } }" x-init="scrollToBottom();
-                $watch('$wire.output', () => setTimeout(() => scrollToBottom(), 50))"
+                $watch('$wire.outputCount', () => setTimeout(() => scrollToBottom(), 50))"
                 @scroll-terminal.window="scrollToBottom()">
 
                 @forelse ($output as $index => $line)
-                    <div wire:key="output-line-{{ $index }}"
+                    <div wire:key="output-{{ $outputCount }}-{{ $index }}"
                         class="group flex gap-2 sm:gap-4 py-0.5 sm:py-1 hover:bg-white/5 -mx-2 px-2 rounded transition-colors duration-150">
                         <span
                             class="text-zinc-700 text-[10px] sm:text-xs font-normal shrink-0 pt-0.5 w-12 sm:w-16 opacity-0 group-hover:opacity-100 transition-opacity select-none">
@@ -390,6 +390,59 @@
                     }
                 }, 50);
             });
+
+            // Listen for output-added event and manually add to DOM
+            Livewire.on('output-added', (event) => {
+                console.log('[FluxSSH] Output added event received:', event);
+                const terminal = document.getElementById('terminal-output');
+                if (!terminal) return;
+
+                const data = event[0]; // Livewire wraps event data in array
+                const output = data.output;
+                const count = data.count;
+
+                // Create output line element
+                const lineDiv = document.createElement('div');
+                lineDiv.className = 'group flex gap-2 sm:gap-4 py-0.5 sm:py-1 hover:bg-white/5 -mx-2 px-2 rounded transition-colors duration-150';
+                lineDiv.setAttribute('data-output-id', count);
+
+                // Timestamp span
+                const timestampSpan = document.createElement('span');
+                timestampSpan.className = 'text-zinc-700 text-[10px] sm:text-xs font-normal shrink-0 pt-0.5 w-12 sm:w-16 opacity-0 group-hover:opacity-100 transition-opacity select-none';
+                timestampSpan.textContent = output.timestamp;
+
+                // Output pre element
+                const outputPre = document.createElement('pre');
+                outputPre.className = `whitespace-pre-wrap break-all sm:wrap-break-word flex-1 text-xs sm:text-sm ${getLineClass(output.type)}`;
+                outputPre.textContent = output.text;
+
+                lineDiv.appendChild(timestampSpan);
+                lineDiv.appendChild(outputPre);
+
+                // Remove empty state if present
+                const emptyState = terminal.querySelector('.flex.flex-col.items-center.justify-center');
+                if (emptyState) {
+                    emptyState.remove();
+                }
+
+                terminal.appendChild(lineDiv);
+
+                // Scroll to bottom
+                setTimeout(() => {
+                    terminal.scrollTop = terminal.scrollHeight;
+                }, 10);
+            });
+
+            function getLineClass(type) {
+                const classes = {
+                    'command': 'text-cyan-400 font-semibold',
+                    'output': 'text-zinc-100',
+                    'error': 'text-red-400 font-medium',
+                    'success': 'text-emerald-400 font-medium',
+                    'info': 'text-sky-400',
+                };
+                return classes[type] || 'text-zinc-300';
+            }
         });
 
         Livewire.hook('morph.updated', ({

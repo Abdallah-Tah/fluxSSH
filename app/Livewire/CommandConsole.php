@@ -19,6 +19,8 @@ class CommandConsole extends Component
 
     public array $output = [];
 
+    public int $outputCount = 0;
+
     public bool $connected = false;
 
     public ?string $sessionId = null;
@@ -533,27 +535,30 @@ class CommandConsole extends Component
             'timestamp' => now()->format('H:i:s'),
         ];
 
-        // Create a new array to ensure Livewire detects the change
-        $newOutput = $this->output;
-        $newOutput[] = $outputEntry;
+        // Directly append to array
+        $this->output[] = $outputEntry;
 
         // Keep only last 1000 lines
-        if (count($newOutput) > 1000) {
-            $newOutput = array_slice($newOutput, -1000);
+        if (count($this->output) > 1000) {
+            $this->output = array_values(array_slice($this->output, -1000));
         }
 
-        // Reassign to trigger Livewire reactivity
-        $this->output = $newOutput;
+        // Increment counter to force Livewire to detect change
+        $this->outputCount++;
 
         Log::debug('[SSH Console] Added to output', [
             'type' => $type,
             'text_length' => strlen($text),
             'text_preview' => substr($text, 0, 100),
             'total_output_lines' => count($this->output),
+            'output_count' => $this->outputCount,
         ]);
 
-        // Dispatch scroll event to update terminal view
-        $this->dispatch('scroll-terminal');
+        // Dispatch event with the output data directly to JavaScript
+        $this->dispatch('output-added', [
+            'output' => $outputEntry,
+            'count' => $this->outputCount,
+        ]);
     }
 
     public function getCommandHistory(): array
