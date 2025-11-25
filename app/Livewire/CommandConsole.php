@@ -33,6 +33,20 @@ class CommandConsole extends Component
 
     public int $tabIndex = -1;
 
+    public string $theme = 'modern'; // modern, retro-green, retro-amber, cyberpunk
+
+    public bool $showHistorySidebar = false;
+
+    public bool $showStats = true;
+
+    public array $bookmarkedCommands = [];
+
+    public string $searchQuery = '';
+
+    public array $executionTimes = [];
+
+    public ?float $lastCommandStartTime = null;
+
     protected $listeners = [
         'echo:ssh-output,CommandOutput' => 'handleOutput',
     ];
@@ -101,6 +115,9 @@ class CommandConsole extends Component
         $this->tabCompletions = [];
         $this->tabIndex = -1;
 
+        // Start timing
+        $this->lastCommandStartTime = microtime(true);
+
         Log::info('[SSH Console] Executing command', [
             'server_id' => $this->server->id,
             'command' => $command,
@@ -114,6 +131,17 @@ class CommandConsole extends Component
         } else {
             $this->addToOutput('$ '.$command, 'command');
             $this->runCommand($command);
+        }
+
+        // Record execution time
+        if ($this->lastCommandStartTime) {
+            $executionTime = microtime(true) - $this->lastCommandStartTime;
+            $this->executionTimes[] = $executionTime;
+            // Keep only last 50 execution times
+            if (count($this->executionTimes) > 50) {
+                array_shift($this->executionTimes);
+            }
+            $this->lastCommandStartTime = null;
         }
 
         $this->command = '';
@@ -589,6 +617,61 @@ class CommandConsole extends Component
             'info' => 'text-sky-400',
             default => 'text-zinc-300'
         };
+    }
+
+    public function toggleTheme(): void
+    {
+        $themes = ['modern', 'retro-green', 'retro-amber', 'cyberpunk'];
+        $currentIndex = array_search($this->theme, $themes);
+        $this->theme = $themes[($currentIndex + 1) % count($themes)];
+    }
+
+    public function toggleHistorySidebar(): void
+    {
+        $this->showHistorySidebar = ! $this->showHistorySidebar;
+    }
+
+    public function toggleStats(): void
+    {
+        $this->showStats = ! $this->showStats;
+    }
+
+    public function bookmarkCommand(string $command): void
+    {
+        if (! in_array($command, $this->bookmarkedCommands)) {
+            $this->bookmarkedCommands[] = $command;
+        }
+    }
+
+    public function removeBookmark(int $index): void
+    {
+        array_splice($this->bookmarkedCommands, $index, 1);
+    }
+
+    public function executeBookmark(string $command): void
+    {
+        $this->command = $command;
+        $this->executeCommand();
+    }
+
+    public function getFilteredOutput(): array
+    {
+        if (empty($this->searchQuery)) {
+            return $this->output;
+        }
+
+        return array_filter($this->output, function ($line) {
+            return stripos($line['text'], $this->searchQuery) !== false;
+        });
+    }
+
+    public function getAverageExecutionTime(): float
+    {
+        if (empty($this->executionTimes)) {
+            return 0;
+        }
+
+        return array_sum($this->executionTimes) / count($this->executionTimes);
     }
 
     public function render()

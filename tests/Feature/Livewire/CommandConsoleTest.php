@@ -3,6 +3,7 @@
 use App\Livewire\CommandConsole;
 use App\Models\Server;
 use App\Models\User;
+use App\Services\SSH\SSHManager;
 use App\Services\SSHService;
 use Livewire\Livewire;
 use Spatie\Ssh\Ssh;
@@ -16,10 +17,8 @@ it('surfaces ssh error output in the console', function () {
         'auth_type' => 'password',
     ]);
 
-    app()->bind(SSHService::class, fn () => new class extends SSHService
+    app()->bind(SSHManager::class, fn () => new class extends SSHManager
     {
-        public function __construct() {}
-
         public function testConnection(Server $server): array
         {
             return [
