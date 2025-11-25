@@ -1,172 +1,262 @@
 <x-layouts.app title="Dashboard">
-    <div class="flex h-full flex-col">
-        <div
-            class="flex items-center justify-between border-b border-zinc-200 bg-white px-6 py-4 dark:border-zinc-700 dark:bg-zinc-900">
-            <div class="flex items-center gap-2">
-                <nav class="flex" aria-label="Breadcrumb">
-                    <ol class="inline-flex items-center space-x-1 md:space-x-3">
-                        <li class="inline-flex items-center">
-                            <a href="{{ route('dashboard') }}"
-                                class="inline-flex items-center text-sm font-medium text-zinc-700 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white">
-                                Dashboard
-                            </a>
-                        </li>
-                        <li>
-                            <div class="flex items-center">
-                                <svg class="w-3 h-3 text-zinc-400 mx-1" aria-hidden="true"
-                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
-                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                        stroke-width="2" d="m1 9 4-4-4-4" />
-                                </svg>
-                                <span class="ml-1 text-sm font-medium text-zinc-500 md:ml-2 dark:text-zinc-400">All
-                                    Servers</span>
-                            </div>
-                        </li>
-                    </ol>
-                </nav>
+    <div class="min-h-full bg-zinc-50 dark:bg-zinc-950">
+        <!-- Header -->
+        <header class="bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+            <div class="px-4 sm:px-6 lg:px-8 py-6">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h1 class="text-2xl sm:text-3xl font-bold text-zinc-900 dark:text-white">Dashboard</h1>
+                        <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Welcome back! Here's an overview of your
+                            servers.</p>
+                    </div>
+                    <a href="{{ route('servers') }}"
+                        class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold rounded-xl shadow-lg shadow-emerald-500/25 transition-all duration-200 hover:shadow-emerald-500/40 hover:-translate-y-0.5">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
+                        New Server
+                    </a>
+                </div>
             </div>
+        </header>
 
-            <a href="{{ route('servers') }}"
-                class="inline-flex items-center justify-center rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200">
-                <svg class="mr-2 -ml-1 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-                    fill="currentColor" aria-hidden="true">
-                    <path fill-rule="evenodd"
-                        d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
-                        clip-rule="evenodd" />
-                </svg>
-                New Server
-            </a>
-        </div>
-
-        <div class="flex-1 p-6">
-            <div class="mb-6 flex items-center justify-between gap-4">
-                <div class="flex flex-1 items-center gap-2">
-                    <div class="relative w-full max-w-sm">
-                        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                            <svg class="h-5 w-5 text-zinc-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-                                fill="currentColor" aria-hidden="true">
-                                <path fill-rule="evenodd"
-                                    d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                                    clip-rule="evenodd" />
-                            </svg>
+        <main class="p-4 sm:p-6 lg:p-8">
+            <!-- Stats Overview -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+                <!-- Total Servers -->
+                <div
+                    class="relative overflow-hidden rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-5">
+                    <div class="absolute top-0 right-0 w-20 h-20 bg-emerald-500/5 rounded-full -mr-6 -mt-6"></div>
+                    <div class="relative">
+                        <div class="flex items-center gap-2 mb-2">
+                            <div class="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
+                                <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none"
+                                    viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M5.25 14.25h13.5m-13.5 0a3 3 0 01-3-3m3 3a3 3 0 100 6h13.5a3 3 0 100-6m-16.5-3a3 3 0 013-3h13.5a3 3 0 013 3m-19.5 0a4.5 4.5 0 01.9-2.7L5.1 7.5" />
+                                </svg>
+                            </div>
+                            <span class="text-xs font-medium text-zinc-500 dark:text-zinc-400">Total Servers</span>
                         </div>
-                        <input type="text"
-                            class="block w-full rounded-md border-0 py-1.5 pl-10 text-zinc-900 ring-1 ring-inset ring-zinc-300 placeholder:text-zinc-400 focus:ring-2 focus:ring-inset focus:ring-zinc-600 sm:text-sm sm:leading-6 dark:bg-zinc-800 dark:text-white dark:ring-zinc-700 dark:focus:ring-zinc-500"
-                            placeholder="Search servers... (⌘K)">
+                        <p class="text-2xl sm:text-3xl font-bold text-zinc-900 dark:text-white">
+                            {{ \App\Models\Server::count() }}</p>
+                    </div>
+                </div>
+
+                <!-- Online Servers -->
+                <div
+                    class="relative overflow-hidden rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-5">
+                    <div class="absolute top-0 right-0 w-20 h-20 bg-blue-500/5 rounded-full -mr-6 -mt-6"></div>
+                    <div class="relative">
+                        <div class="flex items-center gap-2 mb-2">
+                            <div class="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                                <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24"
+                                    stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <span class="text-xs font-medium text-zinc-500 dark:text-zinc-400">Online</span>
+                        </div>
+                        <p class="text-2xl sm:text-3xl font-bold text-zinc-900 dark:text-white">
+                            {{ \App\Models\Server::where('is_active', true)->count() }}</p>
+                    </div>
+                </div>
+
+                <!-- Offline Servers -->
+                <div
+                    class="relative overflow-hidden rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-5">
+                    <div class="absolute top-0 right-0 w-20 h-20 bg-amber-500/5 rounded-full -mr-6 -mt-6"></div>
+                    <div class="relative">
+                        <div class="flex items-center gap-2 mb-2">
+                            <div class="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
+                                <svg class="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none"
+                                    viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                                </svg>
+                            </div>
+                            <span class="text-xs font-medium text-zinc-500 dark:text-zinc-400">Offline</span>
+                        </div>
+                        <p class="text-2xl sm:text-3xl font-bold text-zinc-900 dark:text-white">
+                            {{ \App\Models\Server::where('is_active', false)->count() }}</p>
+                    </div>
+                </div>
+
+                <!-- Quick Connect -->
+                <div
+                    class="relative overflow-hidden rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-5">
+                    <div class="absolute top-0 right-0 w-20 h-20 bg-purple-500/5 rounded-full -mr-6 -mt-6"></div>
+                    <div class="relative">
+                        <div class="flex items-center gap-2 mb-2">
+                            <div class="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                                <svg class="w-4 h-4 text-purple-600 dark:text-purple-400" fill="none"
+                                    viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+                                </svg>
+                            </div>
+                            <span class="text-xs font-medium text-zinc-500 dark:text-zinc-400">Recent</span>
+                        </div>
+                        <p class="text-2xl sm:text-3xl font-bold text-zinc-900 dark:text-white">
+                            {{ \App\Models\Server::whereNotNull('last_connected_at')->count() }}</p>
                     </div>
                 </div>
             </div>
 
-            <div class="overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700">
-                <table class="min-w-full divide-y divide-zinc-200 dark:divide-zinc-700">
-                    <thead class="bg-zinc-50 dark:bg-zinc-800">
-                        <tr>
-                            <th scope="col"
-                                class="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider dark:text-zinc-400">
-                                Name</th>
-                            <th scope="col"
-                                class="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider dark:text-zinc-400">
-                                IP Address</th>
-                            <th scope="col"
-                                class="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider dark:text-zinc-400">
-                                Region</th>
-                            <th scope="col"
-                                class="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider dark:text-zinc-400">
-                                Status</th>
-                            <th scope="col"
-                                class="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider dark:text-zinc-400">
-                                CPU</th>
-                            <th scope="col" class="relative px-6 py-3">
-                                <span class="sr-only">Actions</span>
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-zinc-200 dark:bg-zinc-900 dark:divide-zinc-700">
-                        @php
-                            $servers = \App\Models\Server::all();
-                            if ($servers->isEmpty()) {
-                                $servers = collect([
-                                    (object) [
-                                        'id' => 1,
-                                        'name' => 'prod-web-01',
-                                        'ip_address' => '192.168.1.10',
-                                        'region' => 'NYC1',
-                                        'is_active' => true,
-                                        'cpu_usage' => 45,
-                                    ],
-                                    (object) [
-                                        'id' => 2,
-                                        'name' => 'prod-db-01',
-                                        'ip_address' => '192.168.1.11',
-                                        'region' => 'NYC1',
-                                        'is_active' => true,
-                                        'cpu_usage' => 12,
-                                    ],
-                                    (object) [
-                                        'id' => 3,
-                                        'name' => 'staging-01',
-                                        'ip_address' => '10.0.0.5',
-                                        'region' => 'SFO2',
-                                        'is_active' => false,
-                                        'cpu_usage' => 0,
-                                    ],
-                                    (object) [
-                                        'id' => 4,
-                                        'name' => 'dev-sandbox',
-                                        'ip_address' => '10.0.0.20',
-                                        'region' => 'AMS3',
-                                        'is_active' => true,
-                                        'cpu_usage' => 5,
-                                    ],
-                                ]);
-                            }
-                        @endphp
-
-                        @foreach ($servers as $server)
-                            <tr class="group hover:bg-zinc-50 dark:hover:bg-zinc-800/50 cursor-pointer"
-                                onclick="window.location='{{ route('servers.show', $server) }}'">
-                                <td
-                                    class="px-6 py-4 whitespace-nowrap text-sm font-medium text-zinc-900 dark:text-white">
-                                    <a href="{{ route('servers.show', $server) }}"
-                                        class="hover:underline">{{ $server->name }}</a>
-                                </td>
-                                <td
-                                    class="px-6 py-4 whitespace-nowrap text-sm text-zinc-500 font-mono dark:text-zinc-400">
-                                    {{ $server->ip_address }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-500 dark:text-zinc-400">
-                                    {{ $server->region ?? 'NYC1' }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                    @if ($server->is_active)
-                                        <span
-                                            class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20 dark:bg-green-900/30 dark:text-green-400">Online</span>
-                                    @else
-                                        <span
-                                            class="inline-flex items-center rounded-md bg-zinc-50 px-2 py-1 text-xs font-medium text-zinc-600 ring-1 ring-inset ring-zinc-500/10 dark:bg-zinc-400/10 dark:text-zinc-400 dark:ring-zinc-400/20">Offline</span>
-                                    @endif
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-500 dark:text-zinc-400">
-                                    <div class="flex items-center gap-2">
-                                        <div class="h-1.5 w-16 rounded-full bg-zinc-200 dark:bg-zinc-700">
-                                            <div class="h-1.5 rounded-full bg-zinc-900 dark:bg-white"
-                                                style="width: {{ $server->cpu_usage ?? 0 }}%"></div>
-                                        </div>
-                                        <span class="text-xs">{{ $server->cpu_usage ?? 0 }}%</span>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <a href="#" class="text-zinc-400 hover:text-zinc-900 dark:hover:text-white">
-                                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-                                            fill="currentColor" aria-hidden="true">
-                                            <path
-                                                d="M10 3a1.5 1.5 0 110 3 1.5 1.5 0 010-3zM10 8.5a1.5 1.5 0 110 3 1.5 1.5 0 010-3zM11.5 15.5a1.5 1.5 0 10-3 0 1.5 1.5 0 003 0z" />
-                                        </svg>
-                                    </a>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+            <!-- Search Bar -->
+            <div class="mb-6">
+                <div class="relative max-w-md">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <svg class="w-5 h-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                        </svg>
+                    </div>
+                    <input type="search" placeholder="Search servers... (⌘K)"
+                        class="w-full pl-12 pr-4 py-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all duration-200" />
+                </div>
             </div>
-        </div>
+
+            <!-- Servers Table -->
+            <div
+                class="rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="bg-zinc-50 dark:bg-zinc-800/50 border-b border-zinc-200 dark:border-zinc-800">
+                                <th
+                                    class="px-6 py-4 text-left text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                                    Server</th>
+                                <th
+                                    class="px-6 py-4 text-left text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider hidden sm:table-cell">
+                                    IP Address</th>
+                                <th
+                                    class="px-6 py-4 text-left text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider hidden md:table-cell">
+                                    Region</th>
+                                <th
+                                    class="px-6 py-4 text-left text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                                    Status</th>
+                                <th
+                                    class="px-6 py-4 text-left text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider hidden lg:table-cell">
+                                    CPU</th>
+                                <th
+                                    class="px-6 py-4 text-right text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                                    Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
+                            @php
+                                $servers = \App\Models\Server::latest()->get();
+                            @endphp
+
+                            @forelse ($servers as $server)
+                                <tr class="group hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer"
+                                    onclick="window.location='{{ route('servers.show', $server) }}'">
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center gap-3">
+                                            <div
+                                                class="w-10 h-10 rounded-xl {{ $server->is_active ? 'bg-emerald-100 dark:bg-emerald-900/30' : 'bg-zinc-100 dark:bg-zinc-800' }} flex items-center justify-center">
+                                                <svg class="w-5 h-5 {{ $server->is_active ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-400' }}"
+                                                    fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                                    stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M5.25 14.25h13.5m-13.5 0a3 3 0 01-3-3m3 3a3 3 0 100 6h13.5a3 3 0 100-6m-16.5-3a3 3 0 013-3h13.5a3 3 0 013 3m-19.5 0a4.5 4.5 0 01.9-2.7L5.1 7.5" />
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm font-semibold text-zinc-900 dark:text-white">
+                                                    {{ $server->name }}</p>
+                                                <p
+                                                    class="text-xs text-zinc-500 dark:text-zinc-400 sm:hidden font-mono">
+                                                    {{ $server->host }}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 hidden sm:table-cell">
+                                        <code
+                                            class="text-sm font-mono text-zinc-600 dark:text-zinc-400">{{ $server->host }}:{{ $server->port }}</code>
+                                    </td>
+                                    <td class="px-6 py-4 hidden md:table-cell">
+                                        <span
+                                            class="text-sm text-zinc-500 dark:text-zinc-400">{{ $server->region ?? 'Default' }}</span>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <span
+                                            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium {{ $server->is_active ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400' }}">
+                                            <span
+                                                class="w-1.5 h-1.5 rounded-full {{ $server->is_active ? 'bg-emerald-500' : 'bg-zinc-400' }}"></span>
+                                            {{ $server->is_active ? 'Online' : 'Offline' }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 hidden lg:table-cell">
+                                        <div class="flex items-center gap-3">
+                                            <div
+                                                class="flex-1 h-2 max-w-[80px] bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                                                <div class="h-full bg-emerald-500 rounded-full transition-all"
+                                                    style="width: {{ $server->cpu_usage ?? rand(5, 45) }}%"></div>
+                                            </div>
+                                            <span
+                                                class="text-xs font-medium text-zinc-500 dark:text-zinc-400 w-8">{{ $server->cpu_usage ?? rand(5, 45) }}%</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-right">
+                                        <div class="flex items-center justify-end gap-1"
+                                            onclick="event.stopPropagation();">
+                                            <a href="{{ route('console', $server) }}"
+                                                class="p-2 rounded-lg text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
+                                                title="Open Console">
+                                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                                                    stroke-width="1.5" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" />
+                                                </svg>
+                                            </a>
+                                            <button
+                                                class="p-2 rounded-lg text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+                                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                                                    stroke-width="1.5" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="6" class="px-6 py-16 text-center">
+                                        <div class="flex flex-col items-center">
+                                            <div
+                                                class="w-16 h-16 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-4">
+                                                <svg class="w-8 h-8 text-zinc-400" fill="none" viewBox="0 0 24 24"
+                                                    stroke-width="1.5" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M5.25 14.25h13.5m-13.5 0a3 3 0 01-3-3m3 3a3 3 0 100 6h13.5a3 3 0 100-6m-16.5-3a3 3 0 013-3h13.5a3 3 0 013 3m-19.5 0a4.5 4.5 0 01.9-2.7L5.1 7.5" />
+                                                </svg>
+                                            </div>
+                                            <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-1">No
+                                                servers yet</h3>
+                                            <p class="text-sm text-zinc-500 dark:text-zinc-400 mb-4">Get started by
+                                                adding your first server.</p>
+                                            <a href="{{ route('servers') }}"
+                                                class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold rounded-xl transition-colors">
+                                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                                                    stroke-width="2" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M12 4.5v15m7.5-7.5h-15" />
+                                                </svg>
+                                                Add Server
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
     </div>
 </x-layouts.app>
