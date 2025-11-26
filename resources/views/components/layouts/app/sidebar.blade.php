@@ -114,6 +114,7 @@
     </main>
 
     <!-- Global Floating Bottom Navigation (Mobile Only) -->
+    @unless(request()->is('console/*'))
     <div class="fixed bottom-8 left-1/2 -translate-x-1/2 w-[90%] max-w-md px-6 py-3 bg-[#1c1c1e]/90 backdrop-blur-xl border border-white/10 rounded-full flex items-center justify-between shadow-2xl z-50 lg:hidden">
         <a href="{{ route('dashboard') }}" class="flex flex-col items-center gap-1 {{ request()->routeIs('dashboard') ? 'text-cyan-400' : 'text-zinc-500 hover:text-white' }} transition-colors">
             <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
@@ -136,6 +137,7 @@
             <span class="text-[10px] font-medium">Settings</span>
         </a>
     </div>
+    @endunless
 
     @fluxScripts
 </body>

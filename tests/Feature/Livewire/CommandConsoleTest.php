@@ -135,3 +135,197 @@ KEY,
     assertFileExists($path);
     expect(file_get_contents($path))->toStartWith('-----BEGIN OPENSSH PRIVATE KEY-----');
 });
+
+it('saves command to history when executed', function () {
+    $user = User::factory()->create();
+    $server = Server::factory()->create([
+        'auth_type' => 'password',
+    ]);
+
+    app()->bind(SSHManager::class, fn () => new class extends SSHManager
+    {
+        public function testConnection(Server $server): array
+        {
+            return [
+                'success' => true,
+                'message' => 'Connection successful',
+                'output' => 'Connection successful',
+            ];
+        }
+
+        public function getServerInfo(Server $server): array
+        {
+            return [
+                'success' => true,
+                'system_info' => 'TestOS',
+                'current_directory' => '/root',
+            ];
+        }
+
+        public function executeCommand(Server $server, string $command): array
+        {
+            return [
+                'success' => true,
+                'command' => $command,
+                'output' => 'Command output',
+                'error' => '',
+                'exit_code' => 0,
+                'timestamp' => now(),
+            ];
+        }
+    });
+
+    Livewire::actingAs($user)
+        ->test(CommandConsole::class, ['server' => $server])
+        ->set('command', 'ls -la')
+        ->call('executeCommand');
+
+    expect(\App\Models\CommandHistory::query()->where('user_id', $user->id)->where('server_id', $server->id)->exists())->toBeTrue();
+    expect(\App\Models\CommandHistory::query()->where('command', 'ls -la')->first())->not->toBeNull();
+});
+
+it('loads command history on mount', function () {
+    $user = User::factory()->create();
+    $server = Server::factory()->create([
+        'auth_type' => 'password',
+    ]);
+
+    \App\Models\CommandHistory::factory()->create([
+        'user_id' => $user->id,
+        'server_id' => $server->id,
+        'command' => 'ls -la',
+    ]);
+
+    \App\Models\CommandHistory::factory()->create([
+        'user_id' => $user->id,
+        'server_id' => $server->id,
+        'command' => 'pwd',
+    ]);
+
+    app()->bind(SSHManager::class, fn () => new class extends SSHManager
+    {
+        public function testConnection(Server $server): array
+        {
+            return [
+                'success' => true,
+                'message' => 'Connection successful',
+                'output' => 'Connection successful',
+            ];
+        }
+
+        public function getServerInfo(Server $server): array
+        {
+            return [
+                'success' => true,
+                'system_info' => 'TestOS',
+                'current_directory' => '/root',
+            ];
+        }
+    });
+
+    $component = Livewire::actingAs($user)
+        ->test(CommandConsole::class, ['server' => $server]);
+
+    expect($component->get('history'))->toBeArray();
+    expect($component->get('history'))->toContain('ls -la');
+    expect($component->get('history'))->toContain('pwd');
+});
+
+it('navigates command history with up arrow', function () {
+    $user = User::factory()->create();
+    $server = Server::factory()->create([
+        'auth_type' => 'password',
+    ]);
+
+    \App\Models\CommandHistory::factory()->create([
+        'user_id' => $user->id,
+        'server_id' => $server->id,
+        'command' => 'ls -la',
+    ]);
+
+    \App\Models\CommandHistory::factory()->create([
+        'user_id' => $user->id,
+        'server_id' => $server->id,
+        'command' => 'pwd',
+    ]);
+
+    app()->bind(SSHManager::class, fn () => new class extends SSHManager
+    {
+        public function testConnection(Server $server): array
+        {
+            return [
+                'success' => true,
+                'message' => 'Connection successful',
+                'output' => 'Connection successful',
+            ];
+        }
+
+        public function getServerInfo(Server $server): array
+        {
+            return [
+                'success' => true,
+                'system_info' => 'TestOS',
+                'current_directory' => '/root',
+            ];
+        }
+    });
+
+    $component = Livewire::actingAs($user)
+        ->test(CommandConsole::class, ['server' => $server])
+        ->call('navigateHistory', 'up')
+        ->assertSet('command', 'pwd')
+        ->call('navigateHistory', 'up')
+        ->assertSet('command', 'ls -la');
+});
+
+it('navigates command history with down arrow', function () {
+    $user = User::factory()->create();
+    $server = Server::factory()->create([
+        'auth_type' => 'password',
+    ]);
+
+    \App\Models\CommandHistory::factory()->create([
+        'user_id' => $user->id,
+        'server_id' => $server->id,
+        'command' => 'ls -la',
+    ]);
+
+    \App\Models\CommandHistory::factory()->create([
+        'user_id' => $user->id,
+        'server_id' => $server->id,
+        'command' => 'pwd',
+    ]);
+
+    app()->bind(SSHManager::class, fn () => new class extends SSHManager
+    {
+        public function testConnection(Server $server): array
+        {
+            return [
+                'success' => true,
+                'message' => 'Connection successful',
+                'output' => 'Connection successful',
+            ];
+        }
+
+        public function getServerInfo(Server $server): array
+        {
+            return [
+                'success' => true,
+                'system_info' => 'TestOS',
+                'current_directory' => '/root',
+            ];
+        }
+    });
+
+    $component = Livewire::actingAs($user)
+        ->test(CommandConsole::class, ['server' => $server])
+        ->set('command', 'test input')
+        ->call('navigateHistory', 'up')
+        ->assertSet('command', 'pwd')
+        ->call('navigateHistory', 'up')
+        ->assertSet('command', 'ls -la')
+        ->call('navigateHistory', 'down')
+        ->assertSet('command', 'pwd')
+        ->call('navigateHistory', 'down')
+        ->assertSet('command', 'test input');
+});

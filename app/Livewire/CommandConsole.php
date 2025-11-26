@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Models\CommandHistory;
 use App\Models\Server;
 use App\Services\SSH\SSHManager;
 use App\Services\WhispBridge;
@@ -47,6 +48,10 @@ class CommandConsole extends Component
 
     public ?float $lastCommandStartTime = null;
 
+    public int $historyIndex = -1;
+
+    public string $currentInput = '';
+
     protected $listeners = [
         'echo:ssh-output,CommandOutput' => 'handleOutput',
     ];
@@ -54,6 +59,7 @@ class CommandConsole extends Component
     public function mount(Server $server): void
     {
         $this->server = $server;
+        $this->loadCommandHistory();
         $this->initializeConnection();
     }
 
@@ -114,6 +120,8 @@ class CommandConsole extends Component
         $this->history[] = $command;
         $this->tabCompletions = [];
         $this->tabIndex = -1;
+        $this->historyIndex = -1;
+        $this->currentInput = '';
 
         // Start timing
         $this->lastCommandStartTime = microtime(true);
@@ -133,7 +141,7 @@ class CommandConsole extends Component
             $this->runCommand($command);
         }
 
-        // Record execution time
+        // Record execution time and save to database
         if ($this->lastCommandStartTime) {
             $executionTime = microtime(true) - $this->lastCommandStartTime;
             $this->executionTimes[] = $executionTime;
@@ -141,6 +149,10 @@ class CommandConsole extends Component
             if (count($this->executionTimes) > 50) {
                 array_shift($this->executionTimes);
             }
+
+            // Save to database
+            $this->saveCommandToHistory($command, $executionTime);
+
             $this->lastCommandStartTime = null;
         }
 
@@ -672,6 +684,77 @@ class CommandConsole extends Component
         }
 
         return array_sum($this->executionTimes) / count($this->executionTimes);
+    }
+
+    private function loadCommandHistory(): void
+    {
+        $this->history = CommandHistory::query()
+            ->where('user_id', auth()->id())
+            ->where('server_id', $this->server->id)
+            ->orderBy('created_at', 'asc')
+            ->limit(100)
+            ->pluck('command')
+            ->toArray();
+
+        Log::debug('[SSH Console] Loaded command history', [
+            'server_id' => $this->server->id,
+            'count' => count($this->history),
+        ]);
+    }
+
+    private function saveCommandToHistory(string $command, float $executionTime): void
+    {
+        CommandHistory::create([
+            'user_id' => auth()->id(),
+            'server_id' => $this->server->id,
+            'command' => $command,
+            'current_directory' => $this->currentDirectory,
+            'execution_time' => $executionTime,
+        ]);
+
+        Log::debug('[SSH Console] Saved command to history', [
+            'server_id' => $this->server->id,
+            'command' => $command,
+            'execution_time' => $executionTime,
+        ]);
+    }
+
+    public function navigateHistory(string $direction): void
+    {
+        if (empty($this->history)) {
+            return;
+        }
+
+        // Save current input when first navigating
+        if ($this->historyIndex === -1) {
+            $this->currentInput = $this->command;
+        }
+
+        $historyCount = count($this->history);
+
+        if ($direction === 'up') {
+            // Navigate backwards (older commands)
+            if ($this->historyIndex < $historyCount - 1) {
+                $this->historyIndex++;
+                $this->command = $this->history[$historyCount - 1 - $this->historyIndex];
+            }
+        } elseif ($direction === 'down') {
+            // Navigate forwards (newer commands)
+            if ($this->historyIndex > 0) {
+                $this->historyIndex--;
+                $this->command = $this->history[$historyCount - 1 - $this->historyIndex];
+            } elseif ($this->historyIndex === 0) {
+                // Return to current input
+                $this->historyIndex = -1;
+                $this->command = $this->currentInput;
+            }
+        }
+
+        Log::debug('[SSH Console] History navigation', [
+            'direction' => $direction,
+            'index' => $this->historyIndex,
+            'command' => $this->command,
+        ]);
     }
 
     public function render()
