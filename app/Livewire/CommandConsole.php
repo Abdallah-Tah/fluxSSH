@@ -157,7 +157,7 @@ class CommandConsole extends Component
         }
 
         $this->command = '';
-        $this->dispatch('focusInput');
+        $this->dispatch('focus-input');
     }
 
     private function handleCdCommand(string $command): void
@@ -343,7 +343,7 @@ class CommandConsole extends Component
                     $this->addToOutput(implode('  ', $completions), 'info');
                 }
             }
-            $this->dispatch('focusInput');
+            $this->dispatch('focus-input');
 
             return;
         }
@@ -463,7 +463,7 @@ class CommandConsole extends Component
             ]);
         }
 
-        $this->dispatch('focusInput');
+        $this->dispatch('focus-input');
     }
 
     /**

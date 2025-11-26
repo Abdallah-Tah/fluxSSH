@@ -2,14 +2,15 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Crypt;
 
 class Server extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'name',
         'host',
@@ -21,6 +22,14 @@ class Server extends Model
         'is_active',
         'connection_options',
         'last_connected_at',
+        'server_details',
+        'cpu_usage',
+        'memory_usage',
+        'disk_usage',
+        'os_info',
+        'kernel_version',
+        'uptime',
+        'last_detail_fetch_at',
     ];
 
     protected function casts(): array
@@ -29,6 +38,9 @@ class Server extends Model
             'is_active' => 'boolean',
             'connection_options' => 'array',
             'last_connected_at' => 'datetime',
+            'server_details' => 'array',
+            'cpu_usage' => 'decimal:2',
+            'last_detail_fetch_at' => 'datetime',
         ];
     }
 
@@ -36,8 +48,8 @@ class Server extends Model
     protected function privateKey(): Attribute
     {
         return Attribute::make(
-            get: fn(?string $value) => $value ? Crypt::decryptString($value) : null,
-            set: fn(?string $value) => $value ? Crypt::encryptString($value) : null,
+            get: fn (?string $value) => $value ? Crypt::decryptString($value) : null,
+            set: fn (?string $value) => $value ? Crypt::encryptString($value) : null,
         );
     }
 
@@ -45,8 +57,8 @@ class Server extends Model
     protected function password(): Attribute
     {
         return Attribute::make(
-            get: fn(?string $value) => $value ? Crypt::decryptString($value) : null,
-            set: fn(?string $value) => $value ? Crypt::encryptString($value) : null,
+            get: fn (?string $value) => $value ? Crypt::decryptString($value) : null,
+            set: fn (?string $value) => $value ? Crypt::encryptString($value) : null,
         );
     }
 
@@ -63,5 +75,15 @@ class Server extends Model
     public function isPasswordAuth(): bool
     {
         return $this->auth_type === 'password';
+    }
+
+    public function commandHistories(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(CommandHistory::class);
+    }
+
+    public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 }
