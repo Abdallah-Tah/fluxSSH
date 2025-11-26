@@ -12,6 +12,7 @@ class Server extends Model
     use HasFactory;
 
     protected $fillable = [
+        'user_id',
         'name',
         'host',
         'port',

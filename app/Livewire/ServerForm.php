@@ -3,35 +3,35 @@
 namespace App\Livewire;
 
 use App\Models\Server;
-use Livewire\Component;
 use Livewire\Attributes\Validate;
+use Livewire\Component;
 
 class ServerForm extends Component
 {
     public ?Server $server = null;
 
     #[Validate('required|string|max:255')]
-    public string $name = '';
+    public ?string $name = '';
 
     #[Validate('required|string|max:255')]
-    public string $host = '';
+    public ?string $host = '';
 
     #[Validate('required|integer|min:1|max:65535')]
-    public int $port = 22;
+    public ?int $port = 22;
 
     #[Validate('required|string|max:255')]
-    public string $username = '';
+    public ?string $username = '';
 
     #[Validate('required|in:password,key')]
-    public string $auth_type = 'password';
+    public ?string $auth_type = 'password';
 
     #[Validate('nullable|string')]
-    public string $password = '';
+    public ?string $password = '';
 
     #[Validate('nullable|string')]
-    public string $private_key = '';
+    public ?string $private_key = '';
 
-    public bool $is_active = true;
+    public ?bool $is_active = true;
 
     public function mount(?Server $server = null): void
     {
@@ -78,6 +78,7 @@ class ServerForm extends Component
             $this->server->update($data);
             $message = "Server '{$this->name}' updated successfully!";
         } else {
+            $data['user_id'] = auth()->id();
             Server::create($data);
             $message = "Server '{$this->name}' created successfully!";
         }

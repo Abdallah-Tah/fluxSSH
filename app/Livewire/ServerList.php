@@ -58,7 +58,7 @@ class ServerList extends Component
 
     public function connectToServer(Server $server)
     {
-        return redirect()->route('console', ['server' => $server->id]);
+        return redirect()->route('servers.show', ['server' => $server->id]);
     }
 
     public function closeForm(): void
