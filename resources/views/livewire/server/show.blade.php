@@ -1,4 +1,4 @@
-<div class="flex h-full flex-col bg-zinc-50 dark:bg-zinc-950">
+<div class="flex h-full flex-col bg-zinc-50 dark:bg-zinc-950" wire:poll.5s="refreshStats">
     <!-- Header -->
     <header class="bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
         <div class="px-4 sm:px-6 lg:px-8 py-5 sm:py-6">
@@ -96,6 +96,14 @@
             <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
                 <!-- Main Column -->
                 <div class="lg:col-span-2 space-y-6">
+                    @php
+                        $details = json_decode($server->server_details ?? '{}', true);
+                        $memUsed = $details['memory_used_mb'] ?? 0;
+                        $memTotal = $details['memory_total_mb'] ?? 8192;
+                        $diskUsed = $details['disk_used'] ?? '0G';
+                        $diskTotal = $details['disk_total'] ?? '100G';
+                    @endphp
+
                     <!-- Stats Grid -->
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
                         <!-- CPU Card -->
@@ -103,32 +111,30 @@
                             class="relative overflow-hidden rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-5">
                             <div class="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full -mr-8 -mt-8"></div>
                             <div class="relative">
-                                <div class="flex items-center gap-2 mb-3">
-                                    <div class="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                                        <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none"
-                                            viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21m-9-1.5h10.5a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25H6.75A2.25 2.25 0 004.5 6.75v10.5a2.25 2.25 0 002.25 2.25zm.75-12h9v9h-9v-9z" />
+                                <div class="flex items-center justify-between mb-3">
+                                    <div class="flex items-center gap-2">
+                                        <div class="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                                            <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none"
+                                                viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21m-9-1.5h10.5a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25H6.75A2.25 2.25 0 004.5 6.75v10.5a2.25 2.25 0 002.25 2.25zm.75-12h9v9h-9v-9z" />
+                                            </svg>
+                                        </div>
+                                        <span class="text-sm font-medium text-zinc-500 dark:text-zinc-400">CPU Usage</span>
+                                    </div>
+                                    <div wire:loading wire:target="refreshStats">
+                                        <svg class="w-4 h-4 animate-spin text-zinc-400" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                         </svg>
                                     </div>
-                                    <span class="text-sm font-medium text-zinc-500 dark:text-zinc-400">CPU Usage</span>
                                 </div>
                                 <div class="flex items-baseline gap-2">
-                                    <span
-                                        class="text-3xl font-bold text-zinc-900 dark:text-white">{{ $server->cpu_usage ?? 12 }}%</span>
-                                    <span
-                                        class="inline-flex items-center text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                                        <svg class="w-3 h-3 mr-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2"
-                                            stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" />
-                                        </svg>
-                                        2.5%
-                                    </span>
+                                    <span class="text-3xl font-bold text-zinc-900 dark:text-white">{{ number_format($server->cpu_usage ?? 0, 1) }}%</span>
                                 </div>
                                 <div class="mt-3 h-2 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-                                    <div class="h-full bg-blue-500 rounded-full"
-                                        style="width: {{ $server->cpu_usage ?? 12 }}%"></div>
+                                    <div class="h-full bg-blue-500 rounded-full transition-all duration-500"
+                                        style="width: {{ min($server->cpu_usage ?? 0, 100) }}%"></div>
                                 </div>
                             </div>
                         </div>
@@ -139,22 +145,31 @@
                             <div class="absolute top-0 right-0 w-24 h-24 bg-purple-500/5 rounded-full -mr-8 -mt-8">
                             </div>
                             <div class="relative">
-                                <div class="flex items-center gap-2 mb-3">
-                                    <div class="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                                        <svg class="w-4 h-4 text-purple-600 dark:text-purple-400" fill="none"
-                                            viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+                                <div class="flex items-center justify-between mb-3">
+                                    <div class="flex items-center gap-2">
+                                        <div class="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                                            <svg class="w-4 h-4 text-purple-600 dark:text-purple-400" fill="none"
+                                                viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+                                            </svg>
+                                        </div>
+                                        <span class="text-sm font-medium text-zinc-500 dark:text-zinc-400">Memory</span>
+                                    </div>
+                                    <div wire:loading wire:target="refreshStats">
+                                        <svg class="w-4 h-4 animate-spin text-zinc-400" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                         </svg>
                                     </div>
-                                    <span class="text-sm font-medium text-zinc-500 dark:text-zinc-400">Memory</span>
                                 </div>
                                 <div class="flex items-baseline gap-2">
-                                    <span class="text-3xl font-bold text-zinc-900 dark:text-white">4.2</span>
-                                    <span class="text-lg text-zinc-500 dark:text-zinc-400">/ 8 GB</span>
+                                    <span class="text-3xl font-bold text-zinc-900 dark:text-white">{{ number_format($memUsed / 1024, 1) }}</span>
+                                    <span class="text-lg text-zinc-500 dark:text-zinc-400">/ {{ number_format($memTotal / 1024, 1) }} GB</span>
                                 </div>
                                 <div class="mt-3 h-2 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-                                    <div class="h-full bg-purple-500 rounded-full" style="width: 52%"></div>
+                                    <div class="h-full bg-purple-500 rounded-full transition-all duration-500"
+                                        style="width: {{ min($server->memory_usage ?? 0, 100) }}%"></div>
                                 </div>
                             </div>
                         </div>
@@ -165,26 +180,50 @@
                             <div class="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full -mr-8 -mt-8">
                             </div>
                             <div class="relative">
-                                <div class="flex items-center gap-2 mb-3">
-                                    <div class="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
-                                        <svg class="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none"
-                                            viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125" />
+                                <div class="flex items-center justify-between mb-3">
+                                    <div class="flex items-center gap-2">
+                                        <div class="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
+                                            <svg class="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none"
+                                                viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125" />
+                                            </svg>
+                                        </div>
+                                        <span class="text-sm font-medium text-zinc-500 dark:text-zinc-400">Disk</span>
+                                    </div>
+                                    <div wire:loading wire:target="refreshStats">
+                                        <svg class="w-4 h-4 animate-spin text-zinc-400" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                         </svg>
                                     </div>
-                                    <span class="text-sm font-medium text-zinc-500 dark:text-zinc-400">Disk</span>
                                 </div>
                                 <div class="flex items-baseline gap-2">
-                                    <span class="text-3xl font-bold text-zinc-900 dark:text-white">45</span>
-                                    <span class="text-lg text-zinc-500 dark:text-zinc-400">/ 100 GB</span>
+                                    <span class="text-3xl font-bold text-zinc-900 dark:text-white">{{ $diskUsed }}</span>
+                                    <span class="text-lg text-zinc-500 dark:text-zinc-400">/ {{ $diskTotal }}</span>
                                 </div>
                                 <div class="mt-3 h-2 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-                                    <div class="h-full bg-amber-500 rounded-full" style="width: 45%"></div>
+                                    <div class="h-full bg-amber-500 rounded-full transition-all duration-500"
+                                        style="width: {{ min($server->disk_usage ?? 0, 100) }}%"></div>
                                 </div>
                             </div>
                         </div>
                     </div>
+
+                    <!-- Error Message -->
+                    @if($hasError)
+                        <div class="rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4">
+                            <div class="flex items-center gap-3">
+                                <svg class="w-5 h-5 text-red-600 dark:text-red-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                                </svg>
+                                <div>
+                                    <p class="text-sm font-medium text-red-800 dark:text-red-200">Failed to fetch server statistics</p>
+                                    <p class="text-xs text-red-700 dark:text-red-300 mt-0.5">{{ $errorMessage }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
 
                     <!-- Recent Deployments -->
                     <div
@@ -274,21 +313,23 @@
                             Server Information
                         </h3>
                         <dl class="space-y-4">
-                            <div class="flex items-center justify-between">
+                            <div class="flex items-center justify-between gap-4">
                                 <dt class="text-sm text-zinc-500 dark:text-zinc-400">Operating System</dt>
-                                <dd class="text-sm font-medium text-zinc-900 dark:text-white">Ubuntu 22.04 LTS</dd>
+                                <dd class="text-sm font-medium text-zinc-900 dark:text-white text-right">{{ $server->os_info ?? 'Unknown' }}</dd>
                             </div>
-                            <div class="flex items-center justify-between">
+                            <div class="flex items-center justify-between gap-4">
                                 <dt class="text-sm text-zinc-500 dark:text-zinc-400">Kernel</dt>
-                                <dd class="text-sm font-mono text-zinc-900 dark:text-white">5.15.0-91-generic</dd>
+                                <dd class="text-sm font-mono text-zinc-900 dark:text-white">{{ $server->kernel_version ?? 'Unknown' }}</dd>
                             </div>
-                            <div class="flex items-center justify-between">
+                            <div class="flex items-center justify-between gap-4">
                                 <dt class="text-sm text-zinc-500 dark:text-zinc-400">Uptime</dt>
-                                <dd class="text-sm font-medium text-emerald-600 dark:text-emerald-400">14d 2h 12m</dd>
+                                <dd class="text-sm font-medium text-emerald-600 dark:text-emerald-400">{{ $server->uptime ?? 'Unknown' }}</dd>
                             </div>
-                            <div class="flex items-center justify-between">
-                                <dt class="text-sm text-zinc-500 dark:text-zinc-400">Last Backup</dt>
-                                <dd class="text-sm font-medium text-zinc-900 dark:text-white">2 hours ago</dd>
+                            <div class="flex items-center justify-between gap-4">
+                                <dt class="text-sm text-zinc-500 dark:text-zinc-400">Last Updated</dt>
+                                <dd class="text-sm font-medium text-zinc-900 dark:text-white">
+                                    {{ $server->last_detail_fetch_at ? $server->last_detail_fetch_at->diffForHumans() : 'Never' }}
+                                </dd>
                             </div>
                         </dl>
                     </div>

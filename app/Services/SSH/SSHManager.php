@@ -128,6 +128,95 @@ class SSHManager
     }
 
     /**
+     * Get comprehensive server statistics
+     */
+    public function getServerStats(Server $server): array
+    {
+        try {
+            // CPU usage (1 - idle percentage)
+            $cpuCmd = "top -bn1 | grep 'Cpu(s)' | awk '{print 100 - $8}'";
+            $cpu = $this->executeCommand($server, $cpuCmd);
+            $cpuUsage = round((float) trim($cpu['output'] ?? '0'), 1);
+
+            // Memory usage
+            $memCmd = "free -m | awk 'NR==2{printf \"%.1f %.1f %.1f\", $3,$2,($3*100/$2)}'";
+            $mem = $this->executeCommand($server, $memCmd);
+            $memParts = explode(' ', trim($mem['output'] ?? '0 0 0'));
+            $memUsed = (float) ($memParts[0] ?? 0);
+            $memTotal = (float) ($memParts[1] ?? 1);
+            $memPercent = round((float) ($memParts[2] ?? 0), 1);
+
+            // Disk usage (root filesystem)
+            $diskCmd = "df -h / | awk 'NR==2{print $3\" \"$2\" \"$5}' | sed 's/%//'";
+            $disk = $this->executeCommand($server, $diskCmd);
+            $diskParts = explode(' ', trim($disk['output'] ?? '0 0 0'));
+            $diskUsed = $diskParts[0] ?? '0';
+            $diskTotal = $diskParts[1] ?? '0';
+            $diskPercent = (int) ($diskParts[2] ?? 0);
+
+            // OS Info
+            $osCmd = "lsb_release -ds 2>/dev/null || cat /etc/*-release 2>/dev/null | grep PRETTY_NAME | cut -d'=' -f2 | tr -d '\"' || uname -s";
+            $osInfo = $this->executeCommand($server, $osCmd);
+
+            // Kernel version
+            $kernelCmd = 'uname -r';
+            $kernel = $this->executeCommand($server, $kernelCmd);
+
+            // Uptime
+            $uptimeCmd = "uptime -p 2>/dev/null || uptime | awk -F'( |,|:)+' '{print $6,$7\",\",$8,\"hours,\",$9,\"minutes\"}'";
+            $uptime = $this->executeCommand($server, $uptimeCmd);
+            $uptimeStr = trim($uptime['output'] ?? 'Unknown');
+            // Clean up "up " prefix if present
+            $uptimeStr = preg_replace('/^up\s+/', '', $uptimeStr);
+
+            // Update server model with the fetched stats
+            $server->update([
+                'cpu_usage' => $cpuUsage,
+                'memory_usage' => $memPercent,
+                'disk_usage' => $diskPercent,
+                'os_info' => trim($osInfo['output'] ?? 'Unknown'),
+                'kernel_version' => trim($kernel['output'] ?? 'Unknown'),
+                'uptime' => $uptimeStr,
+                'server_details' => json_encode([
+                    'memory_used_mb' => $memUsed,
+                    'memory_total_mb' => $memTotal,
+                    'disk_used' => $diskUsed,
+                    'disk_total' => $diskTotal,
+                ]),
+                'last_detail_fetch_at' => now(),
+            ]);
+
+            return [
+                'success' => true,
+                'cpu_usage' => $cpuUsage,
+                'memory' => [
+                    'used' => $memUsed,
+                    'total' => $memTotal,
+                    'percent' => $memPercent,
+                ],
+                'disk' => [
+                    'used' => $diskUsed,
+                    'total' => $diskTotal,
+                    'percent' => $diskPercent,
+                ],
+                'os_info' => trim($osInfo['output'] ?? 'Unknown'),
+                'kernel_version' => trim($kernel['output'] ?? 'Unknown'),
+                'uptime' => $uptimeStr,
+            ];
+        } catch (Exception $e) {
+            Log::error('Failed to fetch server stats', [
+                'server_id' => $server->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return [
+                'success' => false,
+                'error' => $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
      * Get or create a cached connection for a server
      */
     protected function getOrCreateConnection(Server $server): SSHConnection
