@@ -197,6 +197,109 @@
     .text-gradient {
         @apply bg-clip-text text-transparent bg-gradient-to-r from-primary-500 to-primary-600;
     }
+
+    /* Terminal Themes */
+
+    /* Default (Saturn) - Matches App Theme */
+    [data-theme="saturn"] {
+        --term-bg: var(--color-bg-app);
+        --term-text: var(--color-text-primary);
+        --term-cursor: var(--color-primary-500);
+        --term-selection: var(--color-primary-500);
+        /* Opacity handled in utility */
+        --term-border: var(--color-border-subtle);
+        --term-header-bg: var(--color-bg-surface);
+        --term-sidebar-bg: var(--color-bg-surface-alt);
+
+        --term-ansi-black: #3f3f46;
+        --term-ansi-red: #ef4444;
+        --term-ansi-green: #10b981;
+        --term-ansi-yellow: #f59e0b;
+        --term-ansi-blue: #3b82f6;
+        --term-ansi-magenta: #d946ef;
+        --term-ansi-cyan: #06b6d4;
+        --term-ansi-white: #f4f4f5;
+    }
+
+    /* Dracula */
+    [data-theme="dracula"] {
+        --term-bg: #282a36;
+        --term-text: #f8f8f2;
+        --term-cursor: #ff79c6;
+        --term-selection: #44475a;
+        --term-border: #44475a;
+        --term-header-bg: #21222c;
+        --term-sidebar-bg: #282a36;
+
+        --term-ansi-black: #21222c;
+        --term-ansi-red: #ff5555;
+        --term-ansi-green: #50fa7b;
+        --term-ansi-yellow: #f1fa8c;
+        --term-ansi-blue: #bd93f9;
+        --term-ansi-magenta: #ff79c6;
+        --term-ansi-cyan: #8be9fd;
+        --term-ansi-white: #f8f8f2;
+    }
+
+    /* GitHub Dark */
+    [data-theme="github-dark"] {
+        --term-bg: #0d1117;
+        --term-text: #c9d1d9;
+        --term-cursor: #58a6ff;
+        --term-selection: #1f6feb;
+        --term-border: #30363d;
+        --term-header-bg: #161b22;
+        --term-sidebar-bg: #0d1117;
+
+        --term-ansi-black: #484f58;
+        --term-ansi-red: #ff7b72;
+        --term-ansi-green: #3fb950;
+        --term-ansi-yellow: #d29922;
+        --term-ansi-blue: #58a6ff;
+        --term-ansi-magenta: #bc8cff;
+        --term-ansi-cyan: #39c5cf;
+        --term-ansi-white: #b1bac4;
+    }
+
+    /* GitHub Light */
+    [data-theme="github-light"] {
+        --term-bg: #ffffff;
+        --term-text: #24292f;
+        --term-cursor: #0969da;
+        --term-selection: #0969da;
+        --term-border: #d0d7de;
+        --term-header-bg: #f6f8fa;
+        --term-sidebar-bg: #ffffff;
+
+        --term-ansi-black: #24292f;
+        --term-ansi-red: #cf222e;
+        --term-ansi-green: #1a7f37;
+        --term-ansi-yellow: #9a6700;
+        --term-ansi-blue: #0969da;
+        --term-ansi-magenta: #8250df;
+        --term-ansi-cyan: #1b7c83;
+        --term-ansi-white: #6e7781;
+    }
+
+    /* Cyberpunk */
+    [data-theme="cyberpunk"] {
+        --term-bg: #050505;
+        --term-text: #00ff9f;
+        --term-cursor: #00ff9f;
+        --term-selection: #d600ff;
+        --term-border: #00ff9f;
+        --term-header-bg: #000000;
+        --term-sidebar-bg: #0a0a0a;
+
+        --term-ansi-black: #121212;
+        --term-ansi-red: #ff0055;
+        --term-ansi-green: #00ff9f;
+        --term-ansi-yellow: #fcee0a;
+        --term-ansi-blue: #00f0ff;
+        --term-ansi-magenta: #d600ff;
+        --term-ansi-cyan: #00f0ff;
+        --term-ansi-white: #ffffff;
+    }
 }
 
 [data-flux-field]:not(ui-radio, ui-checkbox) {
