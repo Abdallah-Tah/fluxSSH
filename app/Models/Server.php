@@ -54,12 +54,12 @@ class Server extends Model
         );
     }
 
-    // Encrypt/decrypt password
+    // Store password as plain text (no encryption)
     protected function password(): Attribute
     {
         return Attribute::make(
-            get: fn (?string $value) => $value ? Crypt::decryptString($value) : null,
-            set: fn (?string $value) => $value ? Crypt::encryptString($value) : null,
+            get: fn (?string $value) => $value,
+            set: fn (?string $value) => $value,
         );
     }
 

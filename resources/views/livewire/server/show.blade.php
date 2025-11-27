@@ -1,4 +1,13 @@
-<div class="flex h-full flex-col bg-zinc-50 dark:bg-zinc-950" wire:poll.5s="refreshStats">
+@php
+    $tabs = [
+        'overview' => 'Overview',
+        'logs' => 'Logs',
+        'activity' => 'Activity',
+        'settings' => 'Settings',
+    ];
+@endphp
+
+<div class="flex h-full flex-col bg-zinc-50 dark:bg-zinc-950" @if ($activeTab === 'overview') wire:poll.5s="refreshStats" @endif>
     <!-- Header -->
     <header class="bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
         <div class="px-4 sm:px-6 lg:px-8 py-5 sm:py-6">
@@ -70,22 +79,18 @@
         <!-- Tabs -->
         <div class="px-4 sm:px-6 lg:px-8">
             <nav class="flex gap-1 overflow-x-auto scrollbar-hide -mb-px">
-                <button
-                    class="px-4 py-3 text-sm font-medium border-b-2 border-emerald-500 text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
-                    Overview
-                </button>
-                <button
-                    class="px-4 py-3 text-sm font-medium border-b-2 border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300 hover:border-zinc-300 dark:hover:border-zinc-600 transition-colors whitespace-nowrap">
-                    Logs
-                </button>
-                <button
-                    class="px-4 py-3 text-sm font-medium border-b-2 border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300 hover:border-zinc-300 dark:hover:border-zinc-600 transition-colors whitespace-nowrap">
-                    Activity
-                </button>
-                <button
-                    class="px-4 py-3 text-sm font-medium border-b-2 border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300 hover:border-zinc-300 dark:hover:border-zinc-600 transition-colors whitespace-nowrap">
-                    Settings
-                </button>
+                @foreach ($tabs as $key => $label)
+                    <button
+                        type="button"
+                        wire:click="setTab('{{ $key }}')"
+                        @class([
+                            'px-4 py-3 text-sm font-medium border-b-2 whitespace-nowrap transition-colors',
+                            'border-emerald-500 text-emerald-600 dark:text-emerald-400' => $activeTab === $key,
+                            'border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300 hover:border-zinc-300 dark:hover:border-zinc-600' => $activeTab !== $key,
+                        ])>
+                        {{ $label }}
+                    </button>
+                @endforeach
             </nav>
         </div>
     </header>
@@ -93,6 +98,7 @@
     <!-- Content -->
     <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
         <div class="max-w-7xl mx-auto">
+            @if ($activeTab === 'overview')
             <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
                 <!-- Main Column -->
                 <div class="lg:col-span-2 space-y-6">
@@ -211,11 +217,11 @@
                     </div>
 
                     <!-- Error Message -->
-                    @if($hasError)
-                        <div class="rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4">
-                            <div class="flex items-center gap-3">
-                                <svg class="w-5 h-5 text-red-600 dark:text-red-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                        @if ($hasError)
+                            <div class="rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4">
+                                <div class="flex items-center gap-3">
+                                    <svg class="w-5 h-5 text-red-600 dark:text-red-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
                                 </svg>
                                 <div>
                                     <p class="text-sm font-medium text-red-800 dark:text-red-200">Failed to fetch server statistics</p>
@@ -389,6 +395,165 @@
                     </div>
                 </div>
             </div>
+            @endif
+
+            @if ($activeTab === 'logs')
+                <div class="rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+                    <div class="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Logs</p>
+                            <h3 class="text-base font-semibold text-zinc-900 dark:text-white">Recent Command History</h3>
+                        </div>
+                        <a href="{{ route('console', $server) }}"
+                            class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-semibold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M13.5 4.5L21 12l-7.5 7.5M21 12H3" />
+                            </svg>
+                            Open Console
+                        </a>
+                    </div>
+                    <div class="divide-y divide-zinc-100 dark:divide-zinc-800">
+                        @forelse ($this->commandLogs as $log)
+                            <div class="px-5 py-4 flex items-start gap-4">
+                                <div class="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 12l3 3 9-9" />
+                                    </svg>
+                                </div>
+                                <div class="flex-1 min-w-0 space-y-2">
+                                    <div class="flex items-center justify-between gap-3 flex-wrap">
+                                        <p class="font-medium text-zinc-900 dark:text-white font-mono text-sm break-all">{{ $log->command }}</p>
+                                        <span class="text-xs text-zinc-500 dark:text-zinc-400">{{ $log->created_at->diffForHumans() }}</span>
+                                    </div>
+                                    <div class="flex flex-wrap items-center gap-3 text-xs text-zinc-500 dark:text-zinc-400">
+                                        @if ($log->current_directory)
+                                            <span class="inline-flex items-center gap-1">
+                                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 7.5A1.5 1.5 0 014.5 6h3.879a1.5 1.5 0 011.06.44l1.121 1.12a1.5 1.5 0 001.06.44H19.5A1.5 1.5 0 0121 9.5v7a1.5 1.5 0 01-1.5 1.5h-15A1.5 1.5 0 013 16.5v-9z" />
+                                                </svg>
+                                                {{ $log->current_directory }}
+                                            </span>
+                                        @endif
+                                        @if ($log->execution_time)
+                                            <span class="inline-flex items-center gap-1">
+                                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l3 3" />
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18z" />
+                                                </svg>
+                                                {{ number_format((float) $log->execution_time, 3) }}s
+                                            </span>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="px-5 py-10 text-center text-sm text-zinc-500 dark:text-zinc-400">
+                                <p>No command logs yet.</p>
+                                <p class="mt-1 text-xs">Execute commands in the console to see them here.</p>
+                            </div>
+                        @endforelse
+                    </div>
+                </div>
+            @endif
+
+            @if ($activeTab === 'activity')
+                <div class="rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+                    <div class="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Activity</p>
+                            <h3 class="text-base font-semibold text-zinc-900 dark:text-white">Latest Events</h3>
+                        </div>
+                        <span class="text-xs text-zinc-500 dark:text-zinc-400">Most recent 15 items</span>
+                    </div>
+                    <div class="divide-y divide-zinc-100 dark:divide-zinc-800">
+                        @forelse ($this->activityLogEntries as $activity)
+                            @php
+                                $badgeClasses = match ($activity->type) {
+                                    'connection' => 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300',
+                                    'command' => 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300',
+                                    'error' => 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300',
+                                    default => 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200',
+                                };
+                            @endphp
+                            <div class="px-5 py-4 flex items-start gap-4">
+                                <div class="p-2 rounded-lg {{ $badgeClasses }}">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                                <div class="flex-1 min-w-0 space-y-2">
+                                    <div class="flex items-start justify-between gap-3 flex-wrap">
+                                        <div>
+                                            <p class="text-sm font-semibold text-zinc-900 dark:text-white">{{ $activity->description }}</p>
+                                            <div class="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                                                <span class="capitalize">{{ $activity->type }}</span>
+                                                <span class="w-1 h-1 rounded-full bg-zinc-300 dark:bg-zinc-700"></span>
+                                                <span class="capitalize">{{ $activity->action }}</span>
+                                            </div>
+                                        </div>
+                                        <span class="text-xs text-zinc-500 dark:text-zinc-400">{{ $activity->created_at->diffForHumans() }}</span>
+                                    </div>
+
+                                    <div class="flex flex-wrap gap-3 text-xs text-zinc-500 dark:text-zinc-400">
+                                        @if ($activity->ip_address)
+                                            <span class="inline-flex items-center gap-1">
+                                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M12 12c2.21 0 4-1.343 4-3s-1.79-3-4-3-4 1.343-4 3 1.79 3 4 3z" />
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M3 12c0 5 4 8 9 8s9-3 9-8" />
+                                                </svg>
+                                                {{ $activity->ip_address }}
+                                            </span>
+                                        @endif
+                                        @if ($activity->server)
+                                            <span class="inline-flex items-center gap-1">
+                                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 7h18M3 12h18M3 17h18" />
+                                                </svg>
+                                                {{ $activity->server->name }}
+                                            </span>
+                                        @endif
+                                    </div>
+
+                                    @if ($activity->metadata)
+                                        <div class="bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800 rounded-lg p-3 text-xs text-zinc-600 dark:text-zinc-300 font-mono">
+                                            @foreach ($activity->metadata as $key => $value)
+                                                <div class="flex items-center gap-2">
+                                                    <span class="text-zinc-500">{{ $key }}:</span>
+                                                    <span>{{ is_array($value) ? json_encode($value) : $value }}</span>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        @empty
+                            <div class="px-5 py-10 text-center text-sm text-zinc-500 dark:text-zinc-400">
+                                <p>No activity recorded yet.</p>
+                                <p class="mt-1 text-xs">Connections, commands, and errors will show up here.</p>
+                            </div>
+                        @endforelse
+                    </div>
+                </div>
+            @endif
+
+            @if ($activeTab === 'settings')
+                <div class="rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+                    <div class="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Settings</p>
+                            <h3 class="text-base font-semibold text-zinc-900 dark:text-white">Update Connection Details</h3>
+                        </div>
+                        <span class="text-xs text-zinc-500 dark:text-zinc-400">Changes save immediately</span>
+                    </div>
+                    <div class="p-5">
+                        <livewire:server-form :server="$server" :reset-after-save="false" wire:key="server-settings-{{ $server->id }}" />
+                    </div>
+                </div>
+            @endif
         </div>
     </main>
 </div>

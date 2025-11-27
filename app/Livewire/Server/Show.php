@@ -2,8 +2,12 @@
 
 namespace App\Livewire\Server;
 
+use App\Models\ActivityLog;
+use App\Models\CommandHistory;
 use App\Models\Server;
 use App\Services\SSH\SSHManager;
+use Illuminate\Support\Collection;
+use Illuminate\View\View;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
@@ -18,6 +22,8 @@ class Show extends Component
     public ?string $errorMessage = null;
 
     public array $stats = [];
+
+    public string $activeTab = 'overview';
 
     public function mount(Server $server): void
     {
@@ -55,7 +61,41 @@ class Show extends Component
         }
     }
 
-    public function render()
+    public function setTab(string $tab): void
+    {
+        if (! in_array($tab, ['overview', 'logs', 'activity', 'settings'], true)) {
+            return;
+        }
+
+        $this->activeTab = $tab;
+
+        if ($tab === 'overview') {
+            $this->refreshStats();
+        }
+    }
+
+    public function getCommandLogsProperty(): Collection
+    {
+        return CommandHistory::query()
+            ->where('user_id', auth()->id())
+            ->where('server_id', $this->server->id)
+            ->latest()
+            ->limit(15)
+            ->get();
+    }
+
+    public function getActivityLogEntriesProperty(): Collection
+    {
+        return ActivityLog::query()
+            ->with('user')
+            ->where('user_id', auth()->id())
+            ->where('server_id', $this->server->id)
+            ->latest()
+            ->limit(15)
+            ->get();
+    }
+
+    public function render(): View
     {
         return view('livewire.server.show');
     }

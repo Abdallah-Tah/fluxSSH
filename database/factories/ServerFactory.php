@@ -17,6 +17,7 @@ class ServerFactory extends Factory
     public function definition(): array
     {
         return [
+            'user_id' => \App\Models\User::factory(),
             'name' => fake()->words(2, true),
             'host' => fake()->domainName(),
             'port' => 22,
@@ -35,7 +36,7 @@ class ServerFactory extends Factory
      */
     public function keyAuth(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn (array $attributes) => [
             'auth_type' => 'key',
             'password' => null,
             'private_key' => fake()->text(1000),
@@ -47,7 +48,7 @@ class ServerFactory extends Factory
      */
     public function passwordAuth(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn (array $attributes) => [
             'auth_type' => 'password',
             'private_key' => null,
             'password' => fake()->password(),
@@ -59,7 +60,7 @@ class ServerFactory extends Factory
      */
     public function inactive(): static
     {
-        return $this->state(fn(array $attributes) => [
+        return $this->state(fn (array $attributes) => [
             'is_active' => false,
         ]);
     }

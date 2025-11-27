@@ -1,5 +1,5 @@
 <div
-    class="min-h-screen bg-gradient-to-br from-zinc-50 via-white to-zinc-100 dark:from-zinc-950 dark:via-zinc-900 dark:to-black text-zinc-900 dark:text-zinc-50 font-sans selection:bg-emerald-500/20"
+    class="min-h-screen bg-gradient-to-br from-slate-100 via-slate-200 to-slate-100 dark:from-zinc-950 dark:via-zinc-900 dark:to-black text-zinc-900 dark:text-zinc-50 font-sans selection:bg-emerald-500/20"
     x-data="{ searchQuery: @entangle('searchQuery') }"
 >
     @php
@@ -7,7 +7,7 @@
         $connectionString = "{$server->username}@{$sanitizedHost}:{$server->port}";
     @endphp
 
-    <header class="hidden lg:block border-b border-zinc-200 dark:border-zinc-800 bg-gradient-to-r from-emerald-500/5 via-teal-500/5 to-cyan-500/5 dark:from-emerald-500/10 dark:via-teal-500/10 dark:to-cyan-500/10 backdrop-blur">
+    <header class="hidden lg:block border-b border-zinc-200 dark:border-zinc-800 bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-cyan-500/10 dark:from-emerald-500/10 dark:via-teal-500/10 dark:to-cyan-500/10 backdrop-blur">
         <div class="mx-auto flex max-w-6xl flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
             <div class="flex items-start gap-3">
                 <span class="relative flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-lg shadow-emerald-500/30">
@@ -68,7 +68,7 @@
 
     <main class="mx-auto flex flex-col h-screen lg:h-auto lg:grid lg:max-w-6xl lg:gap-5 lg:px-5 lg:py-6 lg:grid-cols-[320px_1fr]">
         <aside class="space-y-4 hidden lg:block">
-            <div class="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-lg backdrop-blur">
+            <div class="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 p-4 shadow-lg backdrop-blur">
                 <div class="flex items-center justify-between">
                     <p class="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Session</p>
                     <span class="rounded-full bg-emerald-100 dark:bg-emerald-500/15 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
@@ -116,7 +116,7 @@
                 </div>
             </div>
 
-            <div class="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 dark:from-emerald-500/15 dark:via-emerald-500/5 dark:to-transparent p-4 shadow-sm">
+            <div class="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-gradient-to-br from-slate-100 via-slate-200 to-slate-100 dark:from-emerald-500/15 dark:via-emerald-500/5 dark:to-transparent p-4 shadow-sm">
                 <p class="text-sm font-semibold text-zinc-900 dark:text-white">Quick notes</p>
                 <ul class="mt-3 space-y-2 text-sm text-zinc-700 dark:text-zinc-200">
                     <li class="flex items-start gap-2">
@@ -135,7 +135,7 @@
             </div>
         </aside>
 
-        <section class="flex flex-1 flex-col overflow-hidden lg:rounded-3xl lg:border lg:border-zinc-200 dark:lg:border-zinc-800 lg:bg-zinc-50/50 dark:lg:bg-zinc-950/60 lg:shadow-2xl lg:backdrop-blur lg:min-h-[65vh]">
+        <section class="flex flex-1 flex-col overflow-hidden lg:rounded-3xl lg:border lg:border-zinc-200 dark:lg:border-zinc-800 lg:bg-slate-100/70 dark:lg:bg-zinc-950/60 lg:shadow-2xl lg:backdrop-blur lg:min-h-[65vh]">
             <div class="hidden lg:flex flex-wrap items-center gap-3 border-b border-zinc-200 dark:border-zinc-800 bg-gradient-to-r from-purple-500/5 via-pink-500/5 to-purple-500/5 dark:from-purple-500/10 dark:via-pink-500/10 dark:to-purple-500/10 px-5 py-4">
                 <div>
                     <p class="text-xs uppercase tracking-[0.14em] text-zinc-500 dark:text-zinc-400">Shell</p>
@@ -181,7 +181,7 @@
                 @endphp
 
                 @forelse ($filteredOutput as $line)
-                    <div class="group relative rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 hover:border-emerald-500 dark:hover:border-emerald-400/40 hover:shadow-sm transition-all">
+                    <div class="group relative rounded-xl border border-zinc-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 px-3 py-2 hover:border-emerald-500 dark:hover:border-emerald-400/40 hover:shadow-sm transition-all">
                         <div class="flex items-start gap-3">
                             <span
                                 class="mt-1 h-2 w-2 rounded-full {{ [

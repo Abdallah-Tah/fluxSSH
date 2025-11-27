@@ -242,43 +242,19 @@
             @endif
         </div>
 
-        <!-- Recent Activity -->
-        @if ($this->recentActivity->isNotEmpty())
-            <div
-                class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden">
-                <div
-                    class="px-5 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between bg-gradient-to-r from-purple-500/5 via-pink-500/5 to-purple-500/5 dark:from-purple-500/10 dark:via-pink-500/10 dark:to-purple-500/10">
-                    <h3 class="text-base font-semibold text-zinc-900 dark:text-white">Recent Activity</h3>
-                    <span class="text-xs text-zinc-600 dark:text-zinc-400 font-medium">Last 5 commands</span>
-                </div>
-                <ul class="divide-y divide-zinc-200 dark:divide-zinc-800">
-                    @foreach ($this->recentActivity as $activity)
-                        <li class="px-5 py-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
-                            <div class="flex items-center gap-4">
-                                <div
-                                    class="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0 shadow-md shadow-purple-500/20">
-                                    <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24"
-                                        stroke-width="1.5" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                            d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" />
-                                    </svg>
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <p class="text-sm font-mono text-zinc-900 dark:text-white truncate font-medium">$
-                                        {{ $activity->command }}</p>
-                                    <p class="text-xs text-zinc-600 dark:text-zinc-400 mt-1">
-                                        {{ $activity->server->name }} • {{ $activity->created_at->diffForHumans() }}
-                                    </p>
-                                </div>
-                                @if ($activity->execution_time)
-                                    <code
-                                        class="text-xs font-mono text-purple-700 dark:text-purple-400 bg-purple-100 dark:bg-purple-500/10 px-2 py-1 rounded font-semibold">{{ number_format($activity->execution_time, 3) }}s</code>
-                                @endif
-                            </div>
-                        </li>
-                    @endforeach
-                </ul>
+        <!-- Activity Feed -->
+        <div class="bg-zinc-900/95 backdrop-blur-sm rounded-xl border border-zinc-700/50 shadow-xl overflow-hidden">
+            <div class="px-5 py-4 border-b border-zinc-700/50 bg-zinc-800/50">
+                <h3 class="text-base font-semibold text-zinc-100 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                    Activity Feed
+                </h3>
             </div>
-        @endif
+            <div class="px-5 py-4">
+                @livewire('activity-feed', ['limit' => 10])
+            </div>
+        </div>
     </main>
 </div>

@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Models\ActivityLog;
 use App\Models\CommandHistory;
 use App\Models\Server;
 use App\Services\SSH\SSHManager;
@@ -84,6 +85,15 @@ class CommandConsole extends Component
                 'server_id' => $this->server->id,
             ]);
 
+            // Log activity
+            ActivityLog::log(
+                type: 'connection',
+                action: 'connected',
+                description: "Connected to {$this->server->name}",
+                serverId: $this->server->id,
+                metadata: ['connection_string' => $this->server->getConnectionString()]
+            );
+
             // Get server info
             $serverInfo = $ssh->getServerInfo($this->server);
             if ($serverInfo['success']) {
@@ -105,6 +115,15 @@ class CommandConsole extends Component
                 'server_id' => $this->server->id,
                 'error' => $connectionTest['message'],
             ]);
+
+            // Log failed connection
+            ActivityLog::log(
+                type: 'error',
+                action: 'failed',
+                description: "Failed to connect to {$this->server->name}",
+                serverId: $this->server->id,
+                metadata: ['error' => $connectionTest['message']]
+            );
         }
 
         $this->isLoading = false;
@@ -283,6 +302,19 @@ class CommandConsole extends Component
                 'command' => $command,
                 'output_preview' => $hasOutput ? substr($output, 0, 200) : '(no output)',
             ]);
+
+            // Log successful command execution
+            ActivityLog::log(
+                type: 'command',
+                action: 'executed',
+                description: "Executed command: {$command}",
+                serverId: $this->server->id,
+                metadata: [
+                    'command' => $command,
+                    'directory' => $this->currentDirectory,
+                    'exit_code' => $result['exit_code'] ?? 0,
+                ]
+            );
         } else {
             $exitCode = $result['exit_code'] ?? 'unknown';
 
@@ -293,6 +325,20 @@ class CommandConsole extends Component
                 'output_preview' => $hasOutput ? substr($output, 0, 200) : '(no output)',
                 'error_preview' => ! empty(trim($error)) ? substr($error, 0, 200) : '(no error)',
             ]);
+
+            // Log failed command
+            ActivityLog::log(
+                type: 'error',
+                action: 'failed',
+                description: "Command failed: {$command}",
+                serverId: $this->server->id,
+                metadata: [
+                    'command' => $command,
+                    'directory' => $this->currentDirectory,
+                    'exit_code' => $exitCode,
+                    'error' => ! empty(trim($error)) ? substr($error, 0, 500) : 'No error message',
+                ]
+            );
 
             // Show exit code for failed commands (if not already obvious)
             if (! $hasOutput && empty(trim($error))) {

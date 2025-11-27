@@ -15,7 +15,9 @@
       "Bash(sshpass -p 'amohamed77856701@!' ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@46.62.250.10 'echo \"\"Connection test successful\"\" && hostname')",
       "Bash(sshpass -p 'amohamed77856701@!' ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@46.62.250.10 'echo \"\"Connection test successful\"\" && hostname && pwd')",
       "Bash(sudo cp:*)",
-      "Bash(sudo chmod:*)"
+      "Bash(sudo chmod:*)",
+      "Bash(cat:*)",
+      "Bash(LOG_CHANNEL=single php artisan test:*)"
     ],
     "deny": [],
     "ask": []
