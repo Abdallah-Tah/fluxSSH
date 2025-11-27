@@ -54,16 +54,91 @@
     </header>
 
     <!-- Mobile Floating Header -->
-    <header class="lg:hidden absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-6 py-4 bg-[var(--term-header-bg)]/80 pointer-events-none backdrop-blur-sm border-b border-[var(--term-border)]">
-        <div class="flex items-center gap-2 pointer-events-auto">
-            <span class="text-sm font-medium text-[var(--term-cursor)]">~24ms</span>
+    <header
+        class="lg:hidden absolute top-0 left-0 right-0 z-30 flex flex-col"
+        x-data="{ showMobileMenu: false }"
+    >
+        <div class="flex items-center justify-between px-6 py-4 bg-[var(--term-header-bg)]/90 backdrop-blur-md border-b border-[var(--term-border)] transition-colors duration-300">
+            <div class="flex items-center gap-3">
+                <button
+                    @click="showMobileMenu = !showMobileMenu"
+                    class="p-2 -ml-2 rounded-lg text-[var(--term-text)]/70 hover:bg-[var(--term-text)]/10 transition-colors"
+                >
+                    <svg x-show="!showMobileMenu" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                    </svg>
+                    <svg x-cloak x-show="showMobileMenu" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+                <h2 class="text-base font-bold text-[var(--term-text)]">{{ $server->name }}</h2>
+            </div>
+            
+            <div class="flex items-center gap-2">
+                <span class="text-xs font-medium text-[var(--term-cursor)] bg-[var(--term-cursor)]/10 px-2 py-1 rounded-md">~24ms</span>
+            </div>
         </div>
-        <h2 class="text-base font-bold text-[var(--term-text)] pointer-events-auto">{{ $server->name }}</h2>
-        <a href="{{ route('servers') }}" class="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg bg-red-500/10 text-red-500 transition-colors hover:bg-red-500/20 pointer-events-auto">
-            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-        </a>
+
+        <!-- Mobile Menu Dropdown -->
+        <div
+            x-show="showMobileMenu"
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0 -translate-y-2"
+            x-transition:enter-end="opacity-100 translate-y-0"
+            x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="opacity-100 translate-y-0"
+            x-transition:leave-end="opacity-0 -translate-y-2"
+            class="bg-[var(--term-header-bg)]/95 backdrop-blur-xl border-b border-[var(--term-border)] shadow-xl px-6 py-4 space-y-4"
+            @click.outside="showMobileMenu = false"
+            style="display: none;"
+        >
+            <div class="grid grid-cols-2 gap-3">
+                <button
+                    type="button"
+                    wire:click="toggleTheme"
+                    class="flex flex-col items-center justify-center gap-2 p-3 rounded-xl border border-[var(--term-border)] bg-[var(--term-bg)] text-[var(--term-text)] active:scale-95 transition-all"
+                >
+                    <svg class="w-6 h-6 text-[var(--term-cursor)]" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+                    </svg>
+                    <span class="text-xs font-medium">Theme: {{ ucfirst($theme) }}</span>
+                </button>
+
+                <button
+                    type="button"
+                    wire:click="clearOutput"
+                    class="flex flex-col items-center justify-center gap-2 p-3 rounded-xl border border-[var(--term-border)] bg-[var(--term-bg)] text-[var(--term-text)] active:scale-95 transition-all"
+                >
+                    <svg class="w-6 h-6 text-[var(--term-text)]/70" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                    </svg>
+                    <span class="text-xs font-medium">Clear</span>
+                </button>
+            </div>
+
+            <div class="space-y-2 pt-2 border-t border-[var(--term-border)]">
+                <button
+                    type="button"
+                    wire:click="disconnect"
+                    class="w-full flex items-center justify-center gap-2 p-3 rounded-xl bg-red-500/10 text-red-500 font-medium active:scale-95 transition-all"
+                >
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5.636 5.636a9 9 0 1012.728 0M12 3v9" />
+                    </svg>
+                    Disconnect Session
+                </button>
+                
+                <a
+                    href="{{ route('servers') }}"
+                    class="w-full flex items-center justify-center gap-2 p-3 rounded-xl bg-[var(--term-bg)] border border-[var(--term-border)] text-[var(--term-text)] font-medium active:scale-95 transition-all"
+                >
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
+                    </svg>
+                    Back to Servers
+                </a>
+            </div>
+        </div>
     </header>
 
     <main class="mx-auto flex flex-col h-screen lg:h-auto lg:grid lg:max-w-6xl lg:gap-5 lg:px-5 lg:py-6 lg:grid-cols-[320px_1fr]">
@@ -165,7 +240,7 @@
             </div>
 
             <div
-                class="flex-1 overflow-y-auto px-6 pb-40 pt-16 lg:px-5 lg:py-4 text-sm leading-relaxed text-[var(--term-text)] custom-scrollbar scroll-smooth font-mono"
+                class="flex-1 overflow-y-auto px-6 pb-40 pt-28 lg:px-5 lg:py-4 text-sm leading-relaxed text-[var(--term-text)] custom-scrollbar scroll-smooth font-mono"
                 id="terminal-output"
                 x-data="{ scrollToBottom() { this.$el.scrollTop = this.$el.scrollHeight; } }"
                 x-init="scrollToBottom(); $watch('$wire.outputCount', () => setTimeout(() => scrollToBottom(), 50))"

@@ -8,19 +8,17 @@
             <div class="bg-bg-surface border border-border-subtle rounded-xl p-6">
                 <form wire:submit="updateProfileInformation" class="space-y-6">
                     <!-- Name Input -->
-                    <div class="space-y-2">
-                        <label for="name" class="block text-sm font-medium text-text-primary">{{ __('Name') }}</label>
-                        <input wire:model="name" type="text" id="name" required autofocus autocomplete="name" 
-                            class="w-full rounded-md border-border-strong bg-bg-surface-alt text-text-primary placeholder-text-tertiary focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-colors">
-                        @error('name') <span class="text-xs text-danger">{{ $message }}</span> @enderror
-                    </div>
+                    <flux:field>
+                        <flux:label>{{ __('Name') }}</flux:label>
+                        <flux:input wire:model="name" type="text" required autofocus autocomplete="name" />
+                        <flux:error name="name" />
+                    </flux:field>
 
                     <!-- Email Input -->
-                    <div class="space-y-2">
-                        <label for="email" class="block text-sm font-medium text-text-primary">{{ __('Email') }}</label>
-                        <input wire:model="email" type="email" id="email" required autocomplete="email" 
-                            class="w-full rounded-md border-border-strong bg-bg-surface-alt text-text-primary placeholder-text-tertiary focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-colors">
-                        @error('email') <span class="text-xs text-danger">{{ $message }}</span> @enderror
+                    <flux:field>
+                        <flux:label>{{ __('Email') }}</flux:label>
+                        <flux:input wire:model="email" type="email" required autocomplete="email" />
+                        <flux:error name="email" />
 
                         @if (auth()->user() instanceof \Illuminate\Contracts\Auth\MustVerifyEmail &&! auth()->user()->hasVerifiedEmail())
                             <div class="mt-2 p-3 rounded-md bg-yellow-500/10 border border-yellow-500/20">
@@ -39,7 +37,7 @@
                                 @endif
                             </div>
                         @endif
-                    </div>
+                    </flux:field>
 
                     <!-- Actions -->
                     <div class="flex items-center justify-end gap-4 pt-4 border-t border-border-subtle">
