@@ -20,6 +20,22 @@ class ActivityLog extends Model
         'user_agent',
     ];
 
+    protected static function booted()
+    {
+        static::created(function ($activityLog) {
+            // Dispatch NativePHP event for real-time updates
+            if (class_exists('\Native\Laravel\Facades\Window')) {
+                \Native\Laravel\Facades\Window::current()->dispatch('activity-created', [
+                    'id' => $activityLog->id,
+                    'type' => $activityLog->type,
+                    'action' => $activityLog->action,
+                    'description' => $activityLog->description,
+                    'created_at' => $activityLog->created_at?->toISOString(),
+                ]);
+            }
+        });
+    }
+
     protected function casts(): array
     {
         return [

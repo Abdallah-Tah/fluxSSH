@@ -7,6 +7,32 @@
                 <p class="mt-1 text-sm lg:text-base text-text-secondary">Monitor your infrastructure and recent activity</p>
             </div>
             <div class="flex items-center gap-3">
+                <!-- Refresh Controls -->
+                <div class="flex items-center gap-2 px-3 py-2 bg-bg-surface border border-border-subtle rounded-lg">
+                    <button
+                        wire:click="toggleAutoRefresh"
+                        class="flex items-center gap-2 text-sm font-medium transition-colors {{ $autoRefresh ? 'text-primary-600' : 'text-text-secondary hover:text-text-primary' }}"
+                        title="{{ $autoRefresh ? 'Auto-refresh enabled' : 'Auto-refresh disabled' }}"
+                    >
+                        <svg class="w-4 h-4 {{ $autoRefresh ? 'animate-spin' : '' }}" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                        </svg>
+                        <span class="hidden sm:inline">{{ $autoRefresh ? 'Auto' : 'Manual' }}</span>
+                    </button>
+
+                    <div class="h-4 w-px bg-border-subtle"></div>
+
+                    <button
+                        wire:click="refresh"
+                        class="flex items-center gap-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors"
+                        title="Refresh now"
+                    >
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                        </svg>
+                    </button>
+                </div>
+
                 <a href="{{ route('servers') }}" class="inline-flex items-center gap-2 px-4 py-2.5 bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium rounded-lg transition-all shadow-sm hover:shadow-md">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -216,4 +242,50 @@
             </div>
         </div>
     </div>
+
+    @script
+    <script>
+        // Smart polling with exponential backoff
+        let refreshTimer = null;
+        let currentInterval = @json($this->refreshInterval);
+
+        function startAutoRefresh() {
+            if (refreshTimer) {
+                clearInterval(refreshTimer);
+            }
+
+            refreshTimer = setInterval(() => {
+                if ($wire.autoRefresh) {
+                    $wire.refresh();
+                }
+            }, currentInterval);
+        }
+
+        function stopAutoRefresh() {
+            if (refreshTimer) {
+                clearInterval(refreshTimer);
+                refreshTimer = null;
+            }
+        }
+
+        // Watch for auto-refresh changes
+        $wire.on('auto-refresh-toggled', () => {
+            if ($wire.autoRefresh) {
+                startAutoRefresh();
+            } else {
+                stopAutoRefresh();
+            }
+        });
+
+        // Initialize on mount
+        if ($wire.autoRefresh) {
+            startAutoRefresh();
+        }
+
+        // Cleanup on unmount
+        document.addEventListener('livewire:navigating', () => {
+            stopAutoRefresh();
+        });
+    </script>
+    @endscript
 </div>

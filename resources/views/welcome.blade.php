@@ -105,8 +105,162 @@
             </div>
         </div>
 
-        <!-- Visual Mockup Section -->
-        <div class="w-full max-w-6xl mx-auto mb-32 px-4">
+        <!-- Desktop Mockup Section -->
+        <div class="w-full max-w-6xl mx-auto mb-32 px-4" x-data="terminalDemo('desktop')">
+            <div class="relative rounded-3xl border p-4 md:p-8 overflow-hidden shadow-2xl transition-colors duration-500"
+                 :data-theme="theme"
+                 style="background-color: var(--term-bg); border-color: var(--term-border);">
+                <div class="flex flex-col md:flex-row gap-6 relative z-10">
+                    
+                    <!-- Sidebar -->
+                    <div class="w-full md:w-64 flex-shrink-0 space-y-4">
+                        <!-- Session Card -->
+                        <div class="rounded-xl p-4 border transition-colors duration-500"
+                             style="background-color: var(--term-header-bg); border-color: var(--term-border);">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="font-bold transition-colors duration-500" style="color: var(--term-text);">Session</h3>
+                                <span class="px-2 py-0.5 rounded-md text-xs font-bold uppercase tracking-wider transition-colors duration-500"
+                                      style="background-color: var(--term-bg); color: var(--term-ansi-yellow);">Live</span>
+                            </div>
+                            
+                            <div class="space-y-2 text-sm font-mono transition-colors duration-500" style="color: var(--term-ansi-white);">
+                                <div class="flex justify-between">
+                                    <span>Host</span>
+                                    <span style="color: var(--term-text);">10.0.0.42:22</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>User</span>
+                                    <span class="font-bold" style="color: var(--term-text);">root</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span>Latency</span>
+                                    <span class="flex items-center gap-1.5" style="color: var(--term-ansi-yellow);">
+                                        <span class="w-2 h-2 rounded-full" style="background-color: var(--term-ansi-yellow);"></span>
+                                        ~24ms
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-2 mt-4">
+                                <button @click="toggleTheme()" 
+                                        class="flex items-center justify-center gap-2 px-3 py-2 border rounded-lg text-xs font-bold hover:opacity-80 transition-all duration-200"
+                                        style="background-color: var(--term-bg); border-color: var(--term-border); color: var(--term-text);">
+                                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" /></svg>
+                                    Theme
+                                </button>
+                                <button class="flex items-center justify-center gap-2 px-3 py-2 border rounded-lg text-xs font-bold hover:opacity-80 transition-all duration-200"
+                                        style="background-color: var(--term-bg); border-color: var(--term-border); color: var(--term-text);">
+                                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M5.636 5.636a9 9 0 1012.728 0M12 3v9" /></svg>
+                                    Disconnect
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Quick Notes -->
+                        <div class="rounded-xl p-4 border transition-colors duration-500"
+                             style="background-color: var(--term-header-bg); border-color: var(--term-border);">
+                            <h3 class="font-bold mb-3 transition-colors duration-500" style="color: var(--term-text);">Quick notes</h3>
+                            <ul class="space-y-2 text-xs font-mono transition-colors duration-500" style="color: var(--term-ansi-white);">
+                                <li class="flex gap-2">
+                                    <span style="color: var(--term-ansi-yellow);"> •</span>
+                                    Use tab to request completions from the server.
+                                </li>
+                                <li class="flex gap-2">
+                                    <span style="color: var(--term-ansi-yellow);"> •</span>
+                                    Filter output live without clearing history.
+                                </li>
+                                <li class="flex gap-2">
+                                    <span style="color: var(--term-ansi-yellow);"> •</span>
+                                    Stay on this page while commands execute.
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Terminal Window -->
+                    <div class="flex-1 rounded-xl border shadow-sm flex flex-col min-h-[500px] transition-colors duration-500"
+                         style="background-color: var(--term-bg); border-color: var(--term-border);">
+                        <!-- Terminal Header -->
+                        <div class="px-4 py-3 border-b flex items-center justify-between rounded-t-xl transition-colors duration-500"
+                             style="background-color: var(--term-bg); border-color: var(--term-border);">
+                            <div class="flex items-center gap-4">
+                                <div class="flex flex-col">
+                                    <span class="text-[10px] font-bold uppercase tracking-wider transition-colors duration-500" style="color: var(--term-ansi-white);">SHELL</span>
+                                    <span class="text-sm font-mono font-bold transition-colors duration-500" style="color: var(--term-ansi-yellow);">root@10.0.0.42:22</span>
+                                </div>
+                                <div class="hidden sm:flex items-center gap-2 px-2 py-1 rounded text-xs font-mono transition-colors duration-500"
+                                     style="background-color: var(--term-header-bg); color: var(--term-text);">
+                                    <span class="font-bold">Dir</span>
+                                    /root
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 border rounded-lg transition-colors duration-500"
+                                     style="background-color: var(--term-header-bg); border-color: var(--term-border);">
+                                    <svg class="w-3 h-3" style="color: var(--term-ansi-white);" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
+                                    <span class="text-xs font-mono transition-colors duration-500" style="color: var(--term-ansi-white);">Filter output ...</span>
+                                </div>
+                                <div class="px-3 py-1.5 border rounded-lg text-xs font-mono font-bold transition-colors duration-500"
+                                     style="background-color: var(--term-header-bg); border-color: var(--term-border); color: var(--term-ansi-white);">
+                                    History: 13
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Terminal Body -->
+                        <div class="flex-1 p-6 font-mono text-sm leading-relaxed overflow-y-auto transition-colors duration-500"
+                             style="background-color: var(--term-bg);">
+                            <div class="space-y-4">
+                                <template x-for="(line, index) in lines" :key="index">
+                                    <div>
+                                        <template x-if="line.html">
+                                            <div x-html="line.html"></div>
+                                        </template>
+                                        <template x-if="!line.html">
+                                            <div :class="line.color || 'text-text-secondary'" x-text="line.text" :style="line.style"></div>
+                                        </template>
+                                    </div>
+                                </template>
+                                
+                                <!-- Active Input Line -->
+                                <div class="flex items-center gap-2" x-show="!isProcessing">
+                                    <span class="font-bold transition-colors duration-500" style="color: var(--term-ansi-yellow);">root@hostname:~$</span>
+                                    <span class="transition-colors duration-500" style="color: var(--term-text);" x-text="currentInput"></span>
+                                    <span class="w-2 h-4 transition-colors duration-500" 
+                                          style="background-color: var(--term-cursor);"
+                                          x-show="cursorVisible"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Terminal Footer (Input) -->
+                        <div class="p-4 border-t rounded-b-xl transition-colors duration-500"
+                             style="background-color: var(--term-bg); border-color: var(--term-border);">
+                            <div class="flex items-center gap-4 p-3 border rounded-xl shadow-inner transition-colors duration-500"
+                                 style="background-color: var(--term-header-bg); border-color: var(--term-border);">
+                                <div class="hidden sm:flex items-center gap-2 px-2 py-1 rounded text-xs font-bold transition-colors duration-500"
+                                     style="background-color: var(--term-bg); color: var(--term-ansi-yellow);">
+                                    <span class="w-1.5 h-1.5 rounded-full" style="background-color: var(--term-ansi-yellow);"></span>
+                                    Ready for input
+                                </div>
+                                <div class="flex-1 font-mono text-sm flex items-center gap-2">
+                                    <span class="font-bold transition-colors duration-500" style="color: var(--term-ansi-yellow);">root@hostname:~$</span>
+                                    <span class="transition-colors duration-500" style="color: var(--term-ansi-white);" x-text="currentInput || 'Type a command ...'"></span>
+                                </div>
+                                <button class="px-4 py-1.5 text-white text-xs font-bold rounded-lg transition-colors shadow-sm"
+                                        style="background-color: var(--term-ansi-yellow);">
+                                    Run
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Visual Mockup Section (Mobile) -->
+        <div class="w-full max-w-6xl mx-auto mb-32 px-4" x-data="terminalDemo('mobile')">
             <div class="relative rounded-3xl bg-bg-surface border border-border-subtle p-8 md:p-12 overflow-hidden">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center relative z-10">
 
@@ -150,35 +304,25 @@
                                 <div class="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.1)_50%),linear-gradient(90deg,rgba(255,0,0,0.03),rgba(0,255,0,0.01),rgba(0,0,255,0.03))] z-0 pointer-events-none bg-[length:100%_2px,3px_100%]"></div>
 
                                 <div class="relative z-10 space-y-3">
-                                    <div class="flex flex-wrap">
-                                        <span class="text-primary-500 font-bold">root@flux:~#&nbsp;</span>
-                                        <span class="text-text-primary">flux connect --server=prod-db</span>
-                                    </div>
-
-                                    <div class="text-text-tertiary text-[11px]">
-                                        Connecting to production-db (192.168.1.45)...<br>
-                                        <span class="text-emerald-500">✓ Connection established (23ms)</span>
-                                    </div>
-
-                                    <div class="flex flex-wrap">
-                                        <span class="text-primary-500 font-bold">root@prod-db:~#&nbsp;</span>
-                                        <span class="text-text-primary">htop</span>
-                                    </div>
-
-                                    <!-- Fake htop output -->
-                                    <div class="bg-bg-surface/50 p-2 rounded border border-white/5 text-[10px] font-mono leading-tight text-text-secondary">
-                                        <div class="flex justify-between"><span>CPU [||||||||||||| 85%]</span> <span class="text-primary-500">Tasks: 42</span></div>
-                                        <div class="flex justify-between"><span>MEM [|||||||...... 40%]</span> <span class="text-orange-500">Uptime: 14d</span></div>
-                                        <div class="mt-2 text-text-tertiary">
-                                            PID USER PRI NI VIRT RES SHR S CPU% MEM% TIME+ Command<br>
-                                            892 root  20  0 145M 24M 12M S  2.4  1.2  0:45 mysql<br>
-                                            412 www   20  0 402M 45M 22M S  1.1  2.4  1:12 php-fpm
+                                    <template x-for="(line, index) in lines" :key="index">
+                                        <div>
+                                            <template x-if="line.html">
+                                                <div x-html="line.html"></div>
+                                            </template>
+                                            <template x-if="!line.html">
+                                                <div class="flex flex-wrap">
+                                                    <span class="text-primary-500 font-bold" x-text="line.prompt"></span>
+                                                    <span class="text-text-primary" x-text="line.text"></span>
+                                                </div>
+                                            </template>
                                         </div>
-                                    </div>
+                                    </template>
 
-                                    <div class="flex flex-wrap items-center">
-                                        <span class="text-primary-500 font-bold">root@prod-db:~#&nbsp;</span>
-                                        <span class="animate-pulse bg-primary-500 w-2 h-4 block"></span>
+                                    <!-- Active Input -->
+                                    <div class="flex flex-wrap items-center" x-show="!isProcessing">
+                                        <span class="text-primary-500 font-bold" x-text="prompt"></span>
+                                        <span class="text-text-primary" x-text="currentInput"></span>
+                                        <span class="animate-pulse bg-primary-500 w-2 h-4 block ml-1" x-show="cursorVisible"></span>
                                     </div>
                                 </div>
                             </div>
@@ -254,6 +398,140 @@
                 <div class="absolute top-1/2 right-0 -translate-y-1/2 w-[420px] h-[420px] bg-primary-500/20 blur-[120px] rounded-full pointer-events-none"></div>
             </div>
         </div>
+
+        <script>
+            document.addEventListener('alpine:init', () => {
+                Alpine.data('terminalDemo', (type) => ({
+                    type: type,
+                    lines: [],
+                    currentInput: '',
+                    theme: 'saturn',
+                    isTyping: false,
+                    isProcessing: false,
+                    cursorVisible: true,
+                    prompt: 'root@flux:~# ',
+
+                    init() {
+                        setInterval(() => {
+                            this.cursorVisible = !this.cursorVisible;
+                        }, 500);
+
+                        if (this.type === 'desktop') {
+                            this.startDesktopLoop();
+                        } else {
+                            this.startMobileLoop();
+                        }
+                    },
+
+                    async typeCommand(command) {
+                        this.isTyping = true;
+                        for (let i = 0; i < command.length; i++) {
+                            this.currentInput += command[i];
+                            await new Promise(resolve => setTimeout(resolve, 50 + Math.random() * 50));
+                        }
+                        this.isTyping = false;
+                        await new Promise(resolve => setTimeout(resolve, 300));
+                    },
+
+                    toggleTheme() {
+                        this.theme = this.theme === 'saturn' ? 'dracula' : 'saturn';
+                    },
+
+                    async startDesktopLoop() {
+                        while (true) {
+                            // Reset
+                            this.lines = [
+                                { text: 'Last login: ' + new Date().toLocaleString(), style: 'color: var(--term-ansi-yellow)' },
+                                { text: 'FluxSSH: Connected to Admin-Cloudpanel.', style: 'color: var(--term-ansi-yellow)' }
+                            ];
+                            this.currentInput = '';
+                            
+                            // Wait
+                            await new Promise(resolve => setTimeout(resolve, 1500));
+
+                            // Type htop
+                            await this.typeCommand('htop');
+                            
+                            // "Run"
+                            this.lines.push({ text: 'root@hostname:~$ htop', style: 'color: var(--term-text)' });
+                            this.currentInput = '';
+                            this.isProcessing = true;
+                            
+                            // Show "htop" output (fake)
+                            this.lines.push({ html: `
+                                <div class="p-2 rounded border transition-colors duration-500" style="background-color: var(--term-header-bg); border-color: var(--term-border); color: var(--term-text);">
+                                    <div class="flex justify-between text-[10px] font-mono leading-tight">
+                                        <span>CPU [||||||||||||| 85%]</span> <span style="color: var(--term-ansi-green);">Tasks: 42</span>
+                                    </div>
+                                    <div class="flex justify-between text-[10px] font-mono leading-tight">
+                                        <span>MEM [|||||||...... 40%]</span> <span style="color: var(--term-ansi-yellow);">Uptime: 14d</span>
+                                    </div>
+                                    <div class="mt-2 text-[10px] font-mono leading-tight" style="color: var(--term-ansi-white);">
+                                        PID USER PRI NI VIRT RES SHR S CPU% MEM% TIME+ Command<br>
+                                        892 root  20  0 145M 24M 12M S  2.4  1.2  0:45 mysql<br>
+                                        412 www   20  0 402M 45M 22M S  1.1  2.4  1:12 php-fpm
+                                    </div>
+                                </div>
+                            ` });
+
+                            await new Promise(resolve => setTimeout(resolve, 2500));
+                            
+                            // Clear output for next loop (optional, but htop usually clears screen)
+                            // For demo, we just switch theme then reset
+                            
+                            // Switch Theme
+                            this.toggleTheme();
+                            
+                            await new Promise(resolve => setTimeout(resolve, 2500));
+                            
+                            this.isProcessing = false;
+                        }
+                    },
+
+                    async startMobileLoop() {
+                        while (true) {
+                            this.lines = [];
+                            this.currentInput = '';
+                            this.prompt = 'root@flux:~# ';
+                            
+                            await new Promise(resolve => setTimeout(resolve, 1000));
+                            
+                            await this.typeCommand('flux connect --server=prod-db');
+                            
+                            this.lines.push({ prompt: 'root@flux:~# ', text: 'flux connect --server=prod-db' });
+                            this.currentInput = '';
+                            
+                            this.lines.push({ html: `
+                                <div class="text-[11px] text-text-tertiary">
+                                    Connecting to production-db (10.0.0.42)...<br>
+                                    <span class="text-emerald-500">✓ Connection established (23ms)</span>
+                                </div>
+                            `});
+
+                            await new Promise(resolve => setTimeout(resolve, 500));
+                            
+                            this.prompt = 'root@prod-db:~# ';
+                            
+                            await new Promise(resolve => setTimeout(resolve, 1000));
+                            
+                            await this.typeCommand('htop');
+                            this.lines.push({ prompt: 'root@prod-db:~# ', text: 'htop' });
+                            this.currentInput = '';
+                            
+                            this.lines.push({ html: `
+                                <div class="bg-bg-surface/50 p-2 rounded border border-white/5 text-[10px] font-mono leading-tight text-text-secondary">
+                                    <div class="flex justify-between"><span>CPU [||||||||||||| 85%]</span> <span class="text-primary-500">Tasks: 42</span></div>
+                                    <div class="flex justify-between"><span>MEM [|||||||...... 40%]</span> <span class="text-orange-500">Uptime: 14d</span></div>
+                                </div>
+                            `});
+                            
+                            await new Promise(resolve => setTimeout(resolve, 3000));
+                        }
+                    }
+                }))
+            });
+        </script>
+
 
         <!-- Why Mobile Matters Section -->
         <div class="w-full max-w-4xl mx-auto mb-32 px-4">

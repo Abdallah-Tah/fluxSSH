@@ -124,25 +124,31 @@ class CommandConsole extends Component
             return;
         }
 
+        $command = trim($this->command);
+
+        if (preg_match('/^htop(\s|$)/', $command)) {
+            $command = 'TERM=xterm-256color htop -C -d 5 -n 1';
+        }
+
         $this->lastCommandStartTime = microtime(true);
 
-        $this->history[] = $this->command;
+        $this->history[] = $command;
         $this->historyIndex = -1;
 
         $this->output[] = [
             'type' => 'command',
-            'text' => $this->command,
+            'text' => $command,
             'timestamp' => now()->format('H:i:s'),
         ];
 
         $ssh = app(SSHManager::class);
-        $result = $ssh->executeCommand($this->server, $this->command);
+        $result = $ssh->executeCommand($this->server, $command);
 
         $executionTime = microtime(true) - $this->lastCommandStartTime;
         $this->executionTimes[] = $executionTime;
 
         // Update directory if it's a cd command
-        if (preg_match('/^cd\s+(.+)/', $this->command, $matches)) {
+        if (preg_match('/^cd\s+(.+)/', $command, $matches)) {
             $pwdResult = $ssh->executeCommand($this->server, 'pwd');
             if (isset($pwdResult['output'])) {
                 $this->currentDirectory = trim($pwdResult['output']);
@@ -160,10 +166,10 @@ class CommandConsole extends Component
             ActivityLog::log(
                 type: 'command',
                 action: 'executed',
-                description: "Executed command: {$this->command}",
+                description: "Executed command: {$command}",
                 serverId: $this->server->id,
                 metadata: [
-                    'command' => $this->command,
+                    'command' => $command,
                     'directory' => $this->currentDirectory,
                     'exit_code' => $result['exit_code'] ?? 0,
                 ]
@@ -179,13 +185,13 @@ class CommandConsole extends Component
             ActivityLog::log(
                 type: 'error',
                 action: 'command_failed',
-                description: "Command execution failed: {$this->command}",
+                description: "Command execution failed: {$command}",
                 serverId: $this->server->id,
-                metadata: ['command' => $this->command]
+                metadata: ['command' => $command]
             );
         }
 
-        $this->saveCommandToHistory($this->command, $executionTime);
+        $this->saveCommandToHistory($command, $executionTime);
 
         $this->outputCount++;
         $this->command = '';

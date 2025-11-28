@@ -2,19 +2,26 @@
 
 namespace App\Services\SSH;
 
-use phpseclib3\Net\SSH2;
-use phpseclib3\Crypt\PublicKeyLoader;
 use Exception;
+use phpseclib3\Crypt\PublicKeyLoader;
+use phpseclib3\Net\SSH2;
 
 class SSHConnection
 {
     protected ?SSH2 $connection = null;
+
     protected string $host;
+
     protected int $port;
+
     protected string $username;
+
     protected ?string $password = null;
+
     protected ?string $privateKey = null;
+
     protected int $timeout = 10;
+
     protected bool $connected = false;
 
     public function __construct(string $host, string $username, int $port = 22)
@@ -38,6 +45,7 @@ class SSHConnection
     public function withPassword(string $password): self
     {
         $this->password = $password;
+
         return $this;
     }
 
@@ -47,6 +55,7 @@ class SSHConnection
     public function withPrivateKey(string $privateKey, ?string $passphrase = null): self
     {
         $this->privateKey = $privateKey;
+
         return $this;
     }
 
@@ -56,6 +65,7 @@ class SSHConnection
     public function timeout(int $seconds): self
     {
         $this->timeout = $seconds;
+
         return $this;
     }
 
@@ -77,11 +87,15 @@ class SSHConnection
                 throw new Exception('No authentication method provided');
             }
 
-            if (!$authenticated) {
+            if (! $authenticated) {
                 throw new Exception('Authentication failed');
             }
 
+            // Don't enable PTY here - it interferes with exec() output
+            // PTY should only be enabled for interactive sessions
+
             $this->connected = true;
+
             return true;
         } catch (Exception $e) {
             $this->connected = false;
@@ -94,19 +108,29 @@ class SSHConnection
      */
     public function execute(string $command): array
     {
-        if (!$this->connected || !$this->connection) {
+        if (! $this->connected || ! $this->connection) {
             $this->connect();
         }
 
         try {
-            $this->connection->enableQuietMode();
+            // Don't use quiet mode - it suppresses output
+            // $this->connection->enableQuietMode();
+
             $output = $this->connection->exec($command);
             $stderr = $this->connection->getStdError();
             $exitCode = $this->connection->getExitStatus();
 
+            // Combine stdout and stderr for display
+            $combinedOutput = trim($output);
+            if (!empty($stderr) && $exitCode !== 0) {
+                $combinedOutput = !empty($combinedOutput)
+                    ? $combinedOutput . "\n" . trim($stderr)
+                    : trim($stderr);
+            }
+
             return [
                 'success' => $exitCode === 0 || $exitCode === false,
-                'output' => trim($output),
+                'output' => $combinedOutput,
                 'stderr' => trim($stderr),
                 'exit_code' => $exitCode === false ? 0 : $exitCode,
             ];
@@ -129,6 +153,7 @@ class SSHConnection
         foreach ($commands as $command) {
             $results[] = $this->execute($command);
         }
+
         return $results;
     }
 

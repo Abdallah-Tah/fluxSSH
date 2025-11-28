@@ -17,7 +17,9 @@
       "Bash(sudo cp:*)",
       "Bash(sudo chmod:*)",
       "Bash(cat:*)",
-      "Bash(LOG_CHANNEL=single php artisan test:*)"
+      "Bash(LOG_CHANNEL=single php artisan test:*)",
+      "Bash(npm install:*)",
+      "Bash(npm uninstall:*)"
     ],
     "deny": [],
     "ask": []

@@ -4,61 +4,171 @@ namespace App\Livewire;
 
 use App\Models\CommandHistory;
 use App\Models\Server;
+use Illuminate\Support\Facades\Cache;
+use Livewire\Attributes\Computed;
 use Livewire\Component;
 
 class Dashboard extends Component
 {
     public string $search = '';
 
-    public function getServersProperty()
-    {
-        return Server::query()
-            ->where('user_id', auth()->id())
-            ->when($this->search, function ($query) {
-                $query->where(function ($q) {
-                    $q->where('name', 'like', "%{$this->search}%")
-                        ->orWhere('host', 'like', "%{$this->search}%");
-                });
-            })
-            ->with(['commandHistories' => function ($query) {
-                $query->latest()->limit(1);
-            }])
-            ->withCount('commandHistories')
-            ->latest()
-            ->get()
-            ->map(function ($server) {
-                $server->status_color = $this->getServerStatusColor($server);
-                $server->uptime_text = $this->getServerUptimeText($server);
+    public bool $autoRefresh = false;
 
-                return $server;
-            });
+    public int $refreshInterval = 300000; // 5 minutes (300 seconds)
+
+    public function toJSON(): array
+    {
+        return [
+            'servers' => $this->servers()->toArray(),
+            'stats' => [
+                'total' => $this->totalServers(),
+                'active' => $this->activeServers(),
+                'commands' => $this->totalCommands(),
+            ],
+        ];
     }
 
-    public function getTotalServersProperty()
+    /**
+     * Livewire event listeners for NativePHP events
+     */
+    protected $listeners = [
+        'activity-created' => 'handleActivityCreated',
+        'server-status-changed' => 'handleServerStatusChanged',
+    ];
+
+    /**
+     * Handle activity created event from NativePHP
+     */
+    public function handleActivityCreated(): void
     {
-        return Server::where('user_id', auth()->id())->count();
+        $this->clearCaches();
     }
 
-    public function getActiveServersProperty()
+    /**
+     * Handle server status changed event from NativePHP
+     */
+    public function handleServerStatusChanged(): void
     {
-        return Server::where('user_id', auth()->id())
-            ->where('is_active', true)
-            ->count();
+        $this->clearCaches();
     }
 
-    public function getTotalCommandsProperty()
+    /**
+     * Clear all dashboard caches
+     */
+    private function clearCaches(): void
     {
-        return CommandHistory::where('user_id', auth()->id())->count();
+        Cache::forget('dashboard.servers.'.auth()->id().".{$this->search}");
+        Cache::forget('dashboard.stats.total_servers.'.auth()->id());
+        Cache::forget('dashboard.stats.active_servers.'.auth()->id());
+        Cache::forget('dashboard.stats.total_commands.'.auth()->id());
+
+        // Unset computed properties to force reload
+        unset($this->servers);
+        unset($this->totalServers);
+        unset($this->activeServers);
+        unset($this->totalCommands);
     }
 
-    public function getRecentActivityProperty()
+    /**
+     * Cached servers property with 5-minute cache
+     */
+    #[Computed(cache: true, seconds: 300)]
+    public function servers()
     {
-        return CommandHistory::query()
-            ->where('user_id', auth()->id())
-            ->with('server')
-            ->latest()
-            ->limit(5)
-            ->get();
+        return Cache::remember(
+            'dashboard.servers.'.auth()->id().".{$this->search}",
+            now()->addMinutes(5),
+            fn () => Server::query()
+                ->where('user_id', auth()->id())
+                ->when($this->search, function ($query) {
+                    $query->where(function ($q) {
+                        $q->where('name', 'like', "%{$this->search}%")
+                            ->orWhere('host', 'like', "%{$this->search}%");
+                    });
+                })
+                ->select(['id', 'name', 'host', 'port', 'is_active', 'last_connected_at', 'user_id'])
+                ->latest()
+                ->get()
+        );
+    }
+
+    /**
+     * Cached total servers count with 10-minute cache
+     */
+    #[Computed(cache: true, seconds: 600)]
+    public function totalServers()
+    {
+        return Cache::remember(
+            'dashboard.stats.total_servers.'.auth()->id(),
+            now()->addMinutes(10),
+            fn () => Server::where('user_id', auth()->id())->count()
+        );
+    }
+
+    /**
+     * Cached active servers count with 5-minute cache
+     */
+    #[Computed(cache: true, seconds: 300)]
+    public function activeServers()
+    {
+        return Cache::remember(
+            'dashboard.stats.active_servers.'.auth()->id(),
+            now()->addMinutes(5),
+            fn () => Server::where('user_id', auth()->id())
+                ->where('is_active', true)
+                ->count()
+        );
+    }
+
+    /**
+     * Cached total commands count with 10-minute cache
+     */
+    #[Computed(cache: true, seconds: 600)]
+    public function totalCommands()
+    {
+        return Cache::remember(
+            'dashboard.stats.total_commands.'.auth()->id(),
+            now()->addMinutes(10),
+            fn () => CommandHistory::where('user_id', auth()->id())->count()
+        );
+    }
+
+    /**
+     * Toggle auto-refresh on/off
+     */
+    public function toggleAutoRefresh(): void
+    {
+        $this->autoRefresh = ! $this->autoRefresh;
+        $this->dispatch('auto-refresh-toggled');
+    }
+
+    /**
+     * Manual refresh - clears cache and reloads
+     */
+    public function refresh(): void
+    {
+        // Clear all dashboard caches for this user
+        Cache::forget('dashboard.servers.'.auth()->id().".{$this->search}");
+        Cache::forget('dashboard.stats.total_servers.'.auth()->id());
+        Cache::forget('dashboard.stats.active_servers.'.auth()->id());
+        Cache::forget('dashboard.stats.total_commands.'.auth()->id());
+
+        // Unset computed properties to force reload
+        unset($this->servers);
+        unset($this->totalServers);
+        unset($this->activeServers);
+        unset($this->totalCommands);
+
+        // Dispatch event to refresh child components
+        $this->dispatch('dashboard-refreshed');
+    }
+
+    /**
+     * Update refresh interval
+     */
+    public function setRefreshInterval(int $interval): void
+    {
+        $this->refreshInterval = max(10000, min(300000, $interval)); // 10s to 5min
     }
 
     private function getServerStatusColor(Server $server): string
