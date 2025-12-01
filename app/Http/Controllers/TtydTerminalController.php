@@ -1,0 +1,59 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Server;
+use App\Services\Terminal\TtydManager;
+
+class TtydTerminalController extends Controller
+{
+    public function __construct(
+        private TtydManager $ttydManager
+    ) {}
+
+    /**
+     * Show the ttyd terminal view
+     */
+    public function show(Server $server)
+    {
+        return view('terminal.ttyd', compact('server'));
+    }
+
+    /**
+     * Start a ttyd terminal session
+     */
+    public function start(Server $server)
+    {
+        $result = $this->ttydManager->startSession($server);
+
+        return response()->json($result);
+    }
+
+    /**
+     * Proxy WebSocket connections to ttyd
+     */
+    public function proxy(string $sessionId)
+    {
+        $session = $this->ttydManager->getSession($sessionId);
+
+        if (! $session) {
+            return response()->json(['error' => 'Session not found'], 404);
+        }
+
+        // Return the port for the frontend to connect to
+        return response()->json([
+            'success' => true,
+            'port' => $session['port'],
+        ]);
+    }
+
+    /**
+     * Stop a ttyd terminal session
+     */
+    public function stop(string $sessionId)
+    {
+        $stopped = $this->ttydManager->stopSession($sessionId);
+
+        return response()->json(['success' => $stopped]);
+    }
+}

@@ -19,7 +19,12 @@
       "Bash(cat:*)",
       "Bash(LOG_CHANNEL=single php artisan test:*)",
       "Bash(npm install:*)",
-      "Bash(npm uninstall:*)"
+      "Bash(npm uninstall:*)",
+      "Bash(ttyd --version:*)",
+      "Bash(sshpass:*)",
+      "Bash(lsof:*)",
+      "Bash(chmod:*)",
+      "Bash(ttyd --port 7702 --writable sshpass -f /tmp/test_ssh_pass ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@46.62.250.10)"
     ],
     "deny": [],
     "ask": []

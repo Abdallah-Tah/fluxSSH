@@ -2,11 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Events\TerminalOutput;
 use App\Models\Server;
 use App\Services\Terminal\TerminalSessionManager;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use phpseclib3\Crypt\PublicKeyLoader;
 use phpseclib3\Net\SSH2;
@@ -27,7 +25,7 @@ class RealtimeTerminalController extends Controller
      */
     public function connect(Request $request, Server $server)
     {
-        $sessionId = 'term_' . Str::uuid();
+        $sessionId = 'term_'.Str::uuid();
         $cols = $request->input('cols', 120);
         $rows = $request->input('rows', 40);
 
@@ -41,13 +39,13 @@ class RealtimeTerminalController extends Controller
                     'name' => $server->name,
                     'host' => $server->host,
                     'username' => $server->username,
-                ]
+                ],
             ]);
         }
 
         return response()->json([
             'success' => false,
-            'error' => $result['error'] ?? 'Connection failed'
+            'error' => $result['error'] ?? 'Connection failed',
         ], 500);
     }
 
@@ -59,7 +57,7 @@ class RealtimeTerminalController extends Controller
     {
         $sessionId = $request->input('session_id');
 
-        if (!$sessionId) {
+        if (! $sessionId) {
             return response()->json(['error' => 'No session ID'], 400);
         }
 
@@ -82,25 +80,41 @@ class RealtimeTerminalController extends Controller
                 $authenticated = $ssh->login($server->username, $server->password);
             }
 
-            if (!$authenticated) {
-                echo "data: " . json_encode(['type' => 'error', 'message' => 'Authentication failed']) . "\n\n";
+            if (! $authenticated) {
+                echo 'data: '.json_encode(['type' => 'error', 'message' => 'Authentication failed'])."\n\n";
                 ob_flush();
                 flush();
+
                 return;
             }
 
-            // Enable PTY
+            // Enable PTY with proper terminal settings
             $ssh->enablePTY();
+            $ssh->setTerminal('xterm-256color');
             $ssh->setWindowSize(120, 40);
 
+            // Start an interactive shell
+            $ssh->write("export TERM=xterm-256color\n");
+            $ssh->write("stty cols 120 rows 40\n");
+            $ssh->write("PS1='$ '\n"); // Simple prompt
+
+            // Clear the initial output
+            usleep(100000); // 100ms delay
+            $ssh->read('', SSH2::READ_SIMPLE);
+
             // Send connected message
-            echo "data: " . json_encode(['type' => 'connected', 'session_id' => $sessionId]) . "\n\n";
+            echo 'data: '.json_encode(['type' => 'connected', 'session_id' => $sessionId])."\n\n";
             ob_flush();
             flush();
 
-            // Store connection for input handling
+            // Send initial prompt
+            $initialPrompt = "\r\n$ ";
+            echo 'data: '.json_encode(['type' => 'output', 'data' => base64_encode($initialPrompt)])."\n\n";
+            ob_flush();
+            flush();
+
+            // Store SSH connection reference in cache for input handling
             $cacheKey = "terminal_ssh_{$sessionId}";
-            cache()->put($cacheKey, serialize($ssh), now()->addHours(2));
 
             $lastActivity = time();
             $timeout = 300; // 5 minutes of inactivity
@@ -124,7 +138,7 @@ class RealtimeTerminalController extends Controller
                 $output = @$ssh->read('', SSH2::READ_SIMPLE);
 
                 if ($output !== false && $output !== '') {
-                    echo "data: " . json_encode(['type' => 'output', 'data' => base64_encode($output)]) . "\n\n";
+                    echo 'data: '.json_encode(['type' => 'output', 'data' => base64_encode($output)])."\n\n";
                     ob_flush();
                     flush();
                     $lastActivity = time();
@@ -139,7 +153,7 @@ class RealtimeTerminalController extends Controller
 
                 // Timeout check
                 if ((time() - $lastActivity) > $timeout) {
-                    echo "data: " . json_encode(['type' => 'timeout']) . "\n\n";
+                    echo 'data: '.json_encode(['type' => 'timeout'])."\n\n";
                     ob_flush();
                     flush();
                     break;
@@ -166,14 +180,14 @@ class RealtimeTerminalController extends Controller
         $sessionId = $request->input('session_id');
         $input = $request->input('input', '');
 
-        if (!$sessionId) {
+        if (! $sessionId) {
             return response()->json(['error' => 'No session ID'], 400);
         }
 
         // Queue input for the stream to pick up
         $inputKey = "terminal_input_{$sessionId}";
         $current = cache()->get($inputKey, '');
-        cache()->put($inputKey, $current . $input, now()->addMinutes(5));
+        cache()->put($inputKey, $current.$input, now()->addMinutes(5));
 
         return response()->json(['success' => true]);
     }
@@ -187,7 +201,7 @@ class RealtimeTerminalController extends Controller
         $cols = $request->input('cols', 120);
         $rows = $request->input('rows', 40);
 
-        if (!$sessionId) {
+        if (! $sessionId) {
             return response()->json(['error' => 'No session ID'], 400);
         }
 
@@ -204,7 +218,7 @@ class RealtimeTerminalController extends Controller
     {
         $sessionId = $request->input('session_id');
 
-        if (!$sessionId) {
+        if (! $sessionId) {
             return response()->json(['error' => 'No session ID'], 400);
         }
 

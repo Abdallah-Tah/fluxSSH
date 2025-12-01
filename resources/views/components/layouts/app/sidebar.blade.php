@@ -132,6 +132,7 @@
     @endunless
 
     @fluxScripts
+    @stack('scripts')
 </body>
 
 </html>

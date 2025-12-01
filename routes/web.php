@@ -1,13 +1,14 @@
 <?php
 
+use App\Http\Controllers\RealtimeTerminalController;
+use App\Http\Controllers\SimpleTerminalController;
+use App\Http\Controllers\TtydTerminalController;
+use App\Http\Controllers\WebSocketTerminalController;
 use App\Livewire\ServerList;
 use App\Livewire\Settings\Appearance;
 use App\Livewire\Settings\Password;
 use App\Livewire\Settings\Profile;
 use App\Livewire\Settings\TwoFactor;
-use App\Http\Controllers\WebSocketTerminalController;
-use App\Http\Controllers\RealtimeTerminalController;
-use App\Http\Controllers\SimpleTerminalController;
 use App\Models\Server;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
@@ -45,6 +46,17 @@ Route::middleware(['auth'])->group(function () {
     // Simple terminal (works reliably)
     Route::get('ssh/{server}', [SimpleTerminalController::class, 'show'])->name('ssh');
 
+    // Livewire Interactive Terminal (for NativePHP mobile)
+    Route::get('shell/{server}', function (Server $server) {
+        return view('terminal.ssh', compact('server'));
+    })->name('shell');
+
+    // ttyd terminal (professional solution using ttyd)
+    Route::get('ttyd/{server}', [TtydTerminalController::class, 'show'])->name('terminal.ttyd');
+    Route::post('ttyd/{server}/start', [TtydTerminalController::class, 'start'])->name('terminal.ttyd.start');
+    Route::get('ttyd/proxy/{sessionId}', [TtydTerminalController::class, 'proxy'])->name('terminal.ttyd.proxy');
+    Route::post('ttyd/stop/{sessionId}', [TtydTerminalController::class, 'stop'])->name('terminal.ttyd.stop');
+
     // Terminal API routes (accept JSON)
     Route::post('/api/terminal/{server}/connect', [WebSocketTerminalController::class, 'connect']);
     Route::post('/api/terminal/{server}/shell', [WebSocketTerminalController::class, 'shell']);
@@ -53,11 +65,11 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/api/terminal/{server}/disconnect', [WebSocketTerminalController::class, 'disconnect']);
 
     // Real-time terminal API routes (SSE)
-    Route::post('/api/realtime-terminal/{server}/connect', [RealtimeTerminalController::class, 'connect']);
-    Route::get('/api/realtime-terminal/{server}/stream', [RealtimeTerminalController::class, 'stream']);
-    Route::post('/api/realtime-terminal/{server}/input', [RealtimeTerminalController::class, 'input']);
-    Route::post('/api/realtime-terminal/{server}/resize', [RealtimeTerminalController::class, 'resize']);
-    Route::post('/api/realtime-terminal/{server}/disconnect', [RealtimeTerminalController::class, 'disconnect']);
+    Route::post('/api/realtime-terminal/{server}/connect', [RealtimeTerminalController::class, 'connect'])->name('terminal.connect');
+    Route::get('/api/realtime-terminal/{server}/stream', [RealtimeTerminalController::class, 'stream'])->name('terminal.stream');
+    Route::post('/api/realtime-terminal/{server}/input', [RealtimeTerminalController::class, 'input'])->name('terminal.input');
+    Route::post('/api/realtime-terminal/{server}/resize', [RealtimeTerminalController::class, 'resize'])->name('terminal.resize');
+    Route::post('/api/realtime-terminal/{server}/disconnect', [RealtimeTerminalController::class, 'disconnect'])->name('terminal.disconnect');
 
     // Simple terminal API
     Route::post('/api/simple-terminal/{server}/execute', [SimpleTerminalController::class, 'execute']);
