@@ -16,7 +16,17 @@ class TtydTerminalController extends Controller
      */
     public function show(Server $server)
     {
-        return view('terminal.ttyd-iframe', compact('server'));
+        // Start ttyd session first
+        $result = $this->ttydManager->startSession($server);
+
+        if (!$result['success']) {
+            return back()->with('error', $result['error'] ?? 'Failed to start terminal');
+        }
+
+        $port = $result['port'];
+
+        // Redirect directly to ttyd (avoids HTTPS/HTTP iframe issues)
+        return redirect("http://localhost:{$port}/");
     }
 
     /**
