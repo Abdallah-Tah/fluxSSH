@@ -15,6 +15,8 @@
     <!-- Styles -->
     @vite(['resources/css/app.css'])
 
+    @stack('styles')
+
     <style>
         body {
             font-family: 'Inter', sans-serif;

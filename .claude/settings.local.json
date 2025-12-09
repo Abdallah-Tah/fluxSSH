@@ -24,9 +24,28 @@
       "Bash(sshpass:*)",
       "Bash(lsof:*)",
       "Bash(chmod:*)",
-      "Bash(ttyd --port 7702 --writable sshpass -f /tmp/test_ssh_pass ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@46.62.250.10)"
+      "Bash(ttyd --port 7702 --writable sshpass -f /tmp/test_ssh_pass ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@46.62.250.10)",
+      "Bash(for port in 22 2222 2200 8022)",
+      "Bash(do echo \"Testing port $port...\" nc -zv -w 2 46.62.250.10 $port)",
+      "Bash(echo:*)",
+      "Bash(echo \"✗ Port $port is closed\" done)",
+      "Bash(nmap:*)",
+      "mcp__laravel-boost__application-info",
+      "mcp__laravel-boost__list-routes",
+      "mcp__laravel-boost__read-log-entries",
+      "mcp__laravel-boost__browser-logs",
+      "mcp__laravel-boost__tinker",
+      "Bash(/tmp/test_ssh_pass)",
+      "mcp__laravel-boost__get-absolute-url",
+      "mcp__laravel-boost__get-config",
+      "Bash(pkill:*)",
+      "Bash(/Users/amohamed/Herd/fluxSSH/start-ttyd.sh:*)"
     ],
     "deny": [],
     "ask": []
-  }
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "laravel-boost"
+  ]
 }

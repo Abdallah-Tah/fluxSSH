@@ -16,7 +16,7 @@ class TtydTerminalController extends Controller
      */
     public function show(Server $server)
     {
-        return view('terminal.ttyd', compact('server'));
+        return view('terminal.ttyd-iframe', compact('server'));
     }
 
     /**

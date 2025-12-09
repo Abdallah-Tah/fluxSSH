@@ -26,7 +26,7 @@ class TtydManager
     public function startSession(Server $server): array
     {
         try {
-            $sessionId = 'ttyd_'.Str::uuid();
+            $sessionId = 'ttyd_' . Str::uuid();
             $port = $this->findAvailablePort();
 
             if (! $port) {
@@ -36,45 +36,64 @@ class TtydManager
                 ];
             }
 
-            // Build SSH command
-            $sshCommand = $this->buildSshCommand($server);
+            // Kill any existing process on this port
+            $this->killProcessOnPort($port);
 
-            // Build simplified ttyd command - complex options were breaking shell execution
-            $ttydCommand = sprintf(
-                'ttyd --port %d --writable %s',
+            // Build the SSH command arguments
+            $commandArgs = $this->buildSshCommand($server);
+
+            // Use the start-ttyd.sh script to start ttyd completely detached
+            $scriptPath = base_path('start-ttyd.sh');
+
+            if (!file_exists($scriptPath)) {
+                throw new \Exception('start-ttyd.sh script not found');
+            }
+
+            // Build the command: start-ttyd.sh <port> <ssh_command_args...>
+            $shellCommand = sprintf(
+                '/bin/bash %s %d %s 2>&1',
+                escapeshellarg($scriptPath),
                 $port,
-                $sshCommand
+                implode(' ', array_map('escapeshellarg', $commandArgs))
             );
 
-            // Start ttyd process in background using exec() for better error handling
-            $output = [];
-            $returnCode = 0;
-            exec($ttydCommand.' > /dev/null 2>&1 & echo $!', $output, $returnCode);
-
-            // The PID should be in the output
-            $pid = isset($output[0]) ? (int) $output[0] : 0;
-
-            // Log the command execution for debugging
-            Log::info('ttyd command executed', [
-                'command' => $ttydCommand,
-                'return_code' => $returnCode,
-                'pid' => $pid,
-                'output' => $output,
+            Log::info('Starting ttyd via script', [
+                'port' => $port,
+                'script_command' => $shellCommand,
+                'server' => $server->name,
+                'ssh_args' => $commandArgs,
             ]);
 
-            // Wait a moment for ttyd to start
-            usleep(500000); // 500ms
+            // Execute the script
+            $output = shell_exec($shellCommand);
+            $output = trim($output ?? '');
 
-            // Verify the process is actually running
-            if ($pid > 0) {
-                $checkCommand = "ps -p {$pid} | grep -v PID";
-                $processCheck = trim(shell_exec($checkCommand) ?: '');
-                if (empty($processCheck)) {
-                    Log::error('ttyd process died immediately after starting', [
-                        'pid' => $pid,
-                        'command' => $ttydCommand,
-                    ]);
-                    $pid = 0;
+            Log::debug('Script output', ['output' => $output]);
+
+            // Parse the output
+            $pid = 0;
+            if (strpos($output, 'SUCCESS:') === 0) {
+                $pid = (int) substr($output, 8);
+            } else {
+                Log::error('Script failed', ['output' => $output]);
+                return [
+                    'success' => false,
+                    'error' => 'Failed to start ttyd: ' . $output,
+                ];
+            }
+
+            // Verify the port is listening
+            usleep(300000); // 300ms
+            if (!$this->isPortListening($port)) {
+                Log::warning('Port not listening after script, retrying...', ['port' => $port]);
+                usleep(500000); // Wait another 500ms
+                usleep(500000); // Wait another 500ms
+
+                if (!$this->isPortListening($port)) {
+                    return [
+                        'success' => false,
+                        'error' => 'ttyd failed to start - port not listening',
+                    ];
                 }
             }
 
@@ -83,15 +102,17 @@ class TtydManager
                 'server_id' => $server->id,
                 'port' => $port,
                 'pid' => $pid,
+                'command' => $shellCommand,
                 'created_at' => now(),
             ], now()->addHours(2));
 
             // Update server last connected
             $server->update(['last_connected_at' => now()]);
 
-            Log::info('ttyd session started', [
+            Log::info('ttyd session started successfully', [
                 'session_id' => $sessionId,
                 'port' => $port,
+                'pid' => $pid,
                 'server' => $server->name,
             ]);
 
@@ -99,11 +120,11 @@ class TtydManager
                 'success' => true,
                 'session_id' => $sessionId,
                 'port' => $port,
-                'url' => url("terminal/ws/{$sessionId}"),
             ];
         } catch (\Exception $e) {
             Log::error('Failed to start ttyd session', [
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
                 'server_id' => $server->id,
             ]);
 
@@ -115,13 +136,116 @@ class TtydManager
     }
 
     /**
-     * Build SSH command for the server
+     * Start a background process and return its PID
      */
-    private function buildSshCommand(Server $server): string
+    private function startBackgroundProcess(string $command): int
     {
-        $host = escapeshellarg($server->host);
-        $port = $server->port;
-        $username = escapeshellarg($server->username);
+        // Use proc_open to start ttyd in a way that survives PHP request
+        $descriptorspec = [
+            0 => ['file', '/dev/null', 'r'],  // stdin
+            1 => ['file', '/dev/null', 'w'],  // stdout
+            2 => ['file', '/dev/null', 'w'],  // stderr
+        ];
+
+        // Start the process with nohup to survive parent exit
+        $fullCommand = "nohup {$command}";
+
+        Log::debug('Starting ttyd via proc_open', ['command' => $fullCommand]);
+
+        $process = proc_open($fullCommand, $descriptorspec, $pipes);
+
+        if (!is_resource($process)) {
+            Log::error('Failed to start process via proc_open');
+            return 0;
+        }
+
+        // Get the status
+        $status = proc_get_status($process);
+        $pid = $status['pid'] ?? 0;
+
+        // Close the process handle but let the process continue running
+        // Don't use proc_close as it waits for the process
+        // Instead just let the handle go out of scope
+
+        Log::debug('proc_open started', ['status' => $status]);
+
+        // Wait a bit and find the actual ttyd PID (child of the shell)
+        usleep(500000); // 500ms
+
+        // Find ttyd PID since proc_open returns the shell PID
+        $ttydPid = $this->findTtydPid();
+
+        Log::debug('Background process result', ['shell_pid' => $pid, 'ttyd_pid' => $ttydPid]);
+
+        return $ttydPid ?: $pid;
+    }
+    /**
+     * Find the PID of a running ttyd process
+     */
+    private function findTtydPid(): int
+    {
+        $output = shell_exec("pgrep -n ttyd 2>/dev/null");
+        return $output ? (int) trim($output) : 0;
+    }
+
+    /**
+     * Check if a process is running
+     */
+    private function isProcessRunning(int $pid): bool
+    {
+        if ($pid <= 0) {
+            return false;
+        }
+        $result = shell_exec("ps -p {$pid} -o pid= 2>/dev/null");
+        return !empty(trim($result ?? ''));
+    }
+
+    /**
+     * Check if a port is listening
+     */
+    private function isPortListening(int $port): bool
+    {
+        // Use full path for lsof since PHP may have limited PATH
+        $result = shell_exec("/usr/sbin/lsof -i :{$port} -P -n 2>/dev/null | /usr/bin/grep LISTEN");
+        return !empty(trim($result ?? ''));
+    }
+
+    /**
+     * Kill any process on a specific port
+     */
+    private function killProcessOnPort(int $port): void
+    {
+        shell_exec("lsof -ti:{$port} | xargs kill -9 2>/dev/null");
+        usleep(100000); // 100ms
+    }
+
+    /**
+     * Build SSH command for the server - returns array of arguments for ttyd
+     */
+    private function buildSshCommand(Server $server): array
+    {
+        $host = $server->host;
+        $port = (int) $server->port;
+        $username = $server->username;
+
+        // For development/testing - if localhost, use a local shell
+        if ($server->host === 'localhost' || $server->host === '127.0.0.1') {
+            Log::info('Using local shell for localhost connection');
+            return ['/bin/bash'];
+        }
+
+        // Find sshpass path
+        $sshpassPath = trim(shell_exec('which sshpass 2>/dev/null') ?: '');
+        if (empty($sshpassPath)) {
+            // Try common locations
+            $commonPaths = ['/usr/bin/sshpass', '/usr/local/bin/sshpass', '/opt/homebrew/bin/sshpass', getenv('HOME') . '/bin/sshpass'];
+            foreach ($commonPaths as $path) {
+                if (file_exists($path)) {
+                    $sshpassPath = $path;
+                    break;
+                }
+            }
+        }
 
         if ($server->auth_type === 'key') {
             // Write private key to temporary file
@@ -132,16 +256,23 @@ class TtydManager
             // Store key file path in cache for cleanup
             Cache::put("ttyd_keyfile_{$keyFile}", true, now()->addHours(2));
 
-            return sprintf(
-                'ssh -i %s -p %d -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null %s@%s',
-                escapeshellarg($keyFile),
-                $port,
-                $username,
-                $host
-            );
+            return [
+                '/usr/bin/ssh',
+                '-i',
+                $keyFile,
+                '-p',
+                (string) $port,
+                '-o',
+                'StrictHostKeyChecking=no',
+                '-o',
+                'UserKnownHostsFile=/dev/null',
+                '-o',
+                'ConnectTimeout=10',
+                "{$username}@{$host}",
+            ];
         }
 
-        // For password auth, write password to temp file to avoid shell escaping issues
+        // For password auth, use sshpass
         $passFile = tempnam(sys_get_temp_dir(), 'ssh_pass_');
         file_put_contents($passFile, $server->password);
         chmod($passFile, 0600);
@@ -149,13 +280,27 @@ class TtydManager
         // Store password file path in cache for cleanup
         Cache::put("ttyd_passfile_{$passFile}", true, now()->addHours(2));
 
-        return sprintf(
-            'sshpass -f %s ssh -p %d -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null %s@%s',
-            escapeshellarg($passFile),
-            $port,
-            $username,
-            $host
-        );
+        Log::info('Using sshpass for password auth', [
+            'sshpass_path' => $sshpassPath,
+            'pass_file' => $passFile,
+            'password_length' => strlen($server->password),
+        ]);
+
+        return [
+            $sshpassPath,
+            '-f',
+            $passFile,
+            '/usr/bin/ssh',
+            '-p',
+            (string) $port,
+            '-o',
+            'StrictHostKeyChecking=no',
+            '-o',
+            'UserKnownHostsFile=/dev/null',
+            '-o',
+            'ConnectTimeout=10',
+            "{$username}@{$host}",
+        ];
     }
 
     /**
@@ -192,9 +337,14 @@ class TtydManager
                 return false;
             }
 
-            // Kill the ttyd process
-            if (isset($session['pid'])) {
-                posix_kill($session['pid'], SIGTERM);
+            // Kill the ttyd process using shell command
+            if (isset($session['pid']) && $session['pid'] > 0) {
+                shell_exec("kill -9 {$session['pid']} 2>/dev/null");
+            }
+
+            // Also kill by port to be safe
+            if (isset($session['port'])) {
+                $this->killProcessOnPort($session['port']);
             }
 
             // Release the port

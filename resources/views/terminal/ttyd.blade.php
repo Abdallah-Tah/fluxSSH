@@ -4,7 +4,7 @@
             <div class="mb-4 flex items-center justify-between">
                 <div>
                     <h1 class="text-2xl font-bold text-white">Professional Terminal</h1>
-                    <p class="text-sm text-slate-400">{{ $server->name }} ({{ $server->username }}@{{ $server - > host }})
+                    <p class="text-sm text-slate-400">{{ $server->name }} ({{ $server->username }}@{{ $server->host }})
                     </p>
                 </div>
                 <div class="flex gap-2">
@@ -33,6 +33,19 @@
 
                 <!-- ttyd Terminal (loaded via iframe) -->
                 <iframe id="terminal-frame" class="w-full border-0" style="height: 600px;"></iframe>
+
+                <!-- Fallback button (hidden by default) -->
+                <div id="fallback-container" class="hidden p-4 bg-slate-800 text-center">
+                    <p class="text-yellow-400 mb-3">Terminal may be blocked by browser security. Open it directly:</p>
+                    <a id="direct-link" href="#" target="_blank"
+                       class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                        </svg>
+                        Open Terminal in New Tab
+                    </a>
+                </div>
             </div>
 
             <div class="mt-4 rounded-lg border border-slate-700 bg-slate-900/50 p-4">
@@ -100,9 +113,30 @@
 
                     // Load ttyd in iframe
                     const port = data.port;
-                    terminalFrame.src = 'http://localhost:' + port;
+                    const ttydUrl = 'http://localhost:' + port;
 
-                    updateStatus('Connected', 'green');
+                    console.log('Connecting to ttyd at:', ttydUrl);
+
+                    // Try to load in iframe
+                    terminalFrame.src = ttydUrl;
+
+                    // Show status
+                    updateStatus('Connected on port ' + port, 'green');
+
+                    // Set up fallback link
+                    const directLink = document.getElementById('direct-link');
+                    const fallbackContainer = document.getElementById('fallback-container');
+
+                    if (directLink) {
+                        directLink.href = ttydUrl;
+                    }
+
+                    // Show fallback button after a short delay
+                    setTimeout(() => {
+                        if (fallbackContainer) {
+                            fallbackContainer.classList.remove('hidden');
+                        }
+                    }, 2000);
 
                     // Store session ID for cleanup
                     window.terminalSessionId = data.session_id;

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\RealtimeTerminalController;
 use App\Http\Controllers\SimpleTerminalController;
+use App\Http\Controllers\TestTerminalController;
 use App\Http\Controllers\TtydTerminalController;
 use App\Http\Controllers\WebSocketTerminalController;
 use App\Livewire\ServerList;
@@ -20,6 +21,10 @@ Route::get('/', function () {
 Route::view('about', 'about')->name('about');
 Route::view('contact', 'contact')->name('contact');
 Route::view('terms', 'terms')->name('terms');
+
+// Test Terminal (no auth required for demo)
+Route::get('test-terminal', [TestTerminalController::class, 'show'])->name('test-terminal');
+Route::post('test-terminal/start', [TestTerminalController::class, 'start'])->name('test-terminal.start');
 
 Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])

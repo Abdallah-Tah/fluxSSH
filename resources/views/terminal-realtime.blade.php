@@ -4,7 +4,7 @@
             <div class="mb-4 flex items-center justify-between">
                 <div>
                     <h1 class="text-2xl font-bold text-white">Interactive Terminal</h1>
-                    <p class="text-sm text-slate-400">{{ $server->name }} ({{ $server->username }}@{{ $server - > host }})
+                    <p class="text-sm text-slate-400">{{ $server->name }} ({{ $server->username }}@{{ $server->host }})
                     </p>
                 </div>
                 <div class="flex gap-2">

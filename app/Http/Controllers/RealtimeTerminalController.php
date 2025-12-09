@@ -89,29 +89,59 @@ class RealtimeTerminalController extends Controller
             }
 
             // Enable PTY with proper terminal settings
+            $cols = 120;
+            $rows = 40;
             $ssh->enablePTY();
             $ssh->setTerminal('xterm-256color');
-            $ssh->setWindowSize(120, 40);
+            $ssh->setWindowSize($cols, $rows);
 
-            // Start an interactive shell
-            $ssh->write("export TERM=xterm-256color\n");
-            $ssh->write("stty cols 120 rows 40\n");
-            $ssh->write("PS1='$ '\n"); // Simple prompt
+            // Use a callback-based exec that processes output in chunks
+            // This runs the command and we can write/read interactively
+            $outputBuffer = '';
+            $shellStarted = false;
 
-            // Clear the initial output
-            usleep(100000); // 100ms delay
-            $ssh->read('', SSH2::READ_SIMPLE);
+            // Start bash in a background thread using exec with callback
+            $ssh->exec('bash -i', function ($str) use (&$outputBuffer, &$shellStarted) {
+                $outputBuffer .= $str;
+                $shellStarted = true;
 
-            // Send connected message
-            echo 'data: '.json_encode(['type' => 'connected', 'session_id' => $sessionId])."\n\n";
-            ob_flush();
-            flush();
+                return $str; // Return the string to continue execution
+            });
 
-            // Send initial prompt
-            $initialPrompt = "\r\n$ ";
-            echo 'data: '.json_encode(['type' => 'output', 'data' => base64_encode($initialPrompt)])."\n\n";
-            ob_flush();
-            flush();
+            // Wait briefly for shell to start
+            $waitStart = microtime(true);
+            while (! $shellStarted && microtime(true) - $waitStart < 2) {
+                usleep(50000); // 50ms
+            }
+
+            // Now that shell is started via callback, configure it
+            if ($shellStarted) {
+                $ssh->write("export TERM=xterm-256color\n");
+                $ssh->write("stty cols {$cols} rows {$rows} 2>/dev/null || true\n");
+                $ssh->write("PS1='\\[\\033[1;32m\\]\\u@\\h\\[\\033[0m\\]:\\[\\033[1;34m\\]\\w\\[\\033[0m\\]\\$ '\n");
+                $ssh->write("clear\n");
+
+                usleep(300000); // 300ms for commands to execute
+
+                // Send connected message
+                echo 'data: '.json_encode(['type' => 'connected', 'session_id' => $sessionId])."\n\n";
+                ob_flush();
+                flush();
+
+                // Send any buffered output
+                if ($outputBuffer) {
+                    echo 'data: '.json_encode(['type' => 'output', 'data' => base64_encode($outputBuffer)])."\n\n";
+                    ob_flush();
+                    flush();
+                    $outputBuffer = '';
+                }
+            } else {
+                echo 'data: '.json_encode(['type' => 'error', 'message' => 'Failed to start shell'])."\n\n";
+                ob_flush();
+                flush();
+
+                return;
+            }
 
             // Store SSH connection reference in cache for input handling
             $cacheKey = "terminal_ssh_{$sessionId}";
