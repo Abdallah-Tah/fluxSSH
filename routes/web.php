@@ -62,6 +62,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('ttyd/proxy/{sessionId}', [TtydTerminalController::class, 'proxy'])->name('terminal.ttyd.proxy');
     Route::post('ttyd/stop/{sessionId}', [TtydTerminalController::class, 'stop'])->name('terminal.ttyd.stop');
 
+    // Professional Terminal with legacy design (Livewire + ttyd)
+    Route::get('pro-terminal/{server}', \App\Livewire\Terminal\TtydTerminal::class)->name('terminal.pro');
+
     // Terminal API routes (accept JSON)
     Route::post('/api/terminal/{server}/connect', [WebSocketTerminalController::class, 'connect']);
     Route::post('/api/terminal/{server}/shell', [WebSocketTerminalController::class, 'shell']);
