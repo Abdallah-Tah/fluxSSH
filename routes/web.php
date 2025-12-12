@@ -61,6 +61,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('ttyd/{server}/start', [TtydTerminalController::class, 'start'])->name('terminal.ttyd.start');
     Route::get('ttyd/proxy/{sessionId}', [TtydTerminalController::class, 'proxy'])->name('terminal.ttyd.proxy');
     Route::post('ttyd/stop/{sessionId}', [TtydTerminalController::class, 'stop'])->name('terminal.ttyd.stop');
+    Route::post('terminal/theme/update', [TtydTerminalController::class, 'updateTheme'])->name('terminal.theme.update');
 
     // Professional Terminal with legacy design (Livewire + ttyd)
     Route::get('pro-terminal/{server}', \App\Livewire\Terminal\TtydTerminal::class)->name('terminal.pro');

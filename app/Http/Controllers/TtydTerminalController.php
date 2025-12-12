@@ -24,7 +24,8 @@ class TtydTerminalController extends Controller
      */
     public function start(Server $server)
     {
-        $result = $this->ttydManager->startSession($server);
+        $theme = auth()->user()->terminal_theme ?? 'saturn';
+        $result = $this->ttydManager->startSession($server, $theme);
 
         return response()->json($result);
     }
@@ -55,5 +56,21 @@ class TtydTerminalController extends Controller
         $stopped = $this->ttydManager->stopSession($sessionId);
 
         return response()->json(['success' => $stopped]);
+    }
+
+    /**
+     * Update user's terminal theme preference
+     */
+    public function updateTheme()
+    {
+        $validatedData = request()->validate([
+            'theme' => 'required|in:saturn,dracula,github-dark,github-light,cyberpunk',
+        ]);
+
+        auth()->user()->update([
+            'terminal_theme' => $validatedData['theme'],
+        ]);
+
+        return response()->json(['success' => true]);
     }
 }

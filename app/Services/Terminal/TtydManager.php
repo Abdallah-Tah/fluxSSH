@@ -21,13 +21,92 @@ class TtydManager
     private const MAX_SESSIONS = 100;
 
     /**
+     * Get xterm.js theme configuration for a given theme name
+     */
+    private function getTerminalTheme(string $theme): array
+    {
+        $themes = [
+            'saturn' => [
+                'background' => '#f7f3ed',
+                'foreground' => '#2d3748',
+                'cursor' => '#e67e22',
+                'cursorAccent' => '#f7f3ed',
+                'selectionBackground' => 'rgba(230, 126, 34, 0.3)',
+            ],
+            'dracula' => [
+                'background' => '#282a36',
+                'foreground' => '#f8f8f2',
+                'cursor' => '#ff79c6',
+                'cursorAccent' => '#282a36',
+                'selectionBackground' => '#44475a',
+                'black' => '#21222c',
+                'red' => '#ff5555',
+                'green' => '#50fa7b',
+                'yellow' => '#f1fa8c',
+                'blue' => '#bd93f9',
+                'magenta' => '#ff79c6',
+                'cyan' => '#8be9fd',
+                'white' => '#f8f8f2',
+            ],
+            'github-dark' => [
+                'background' => '#0d1117',
+                'foreground' => '#c9d1d9',
+                'cursor' => '#58a6ff',
+                'cursorAccent' => '#0d1117',
+                'selectionBackground' => '#1f6feb',
+                'black' => '#484f58',
+                'red' => '#ff7b72',
+                'green' => '#3fb950',
+                'yellow' => '#d29922',
+                'blue' => '#58a6ff',
+                'magenta' => '#bc8cff',
+                'cyan' => '#39c5cf',
+                'white' => '#b1bac4',
+            ],
+            'github-light' => [
+                'background' => '#ffffff',
+                'foreground' => '#24292f',
+                'cursor' => '#0969da',
+                'cursorAccent' => '#ffffff',
+                'selectionBackground' => 'rgba(9, 105, 218, 0.3)',
+                'black' => '#24292f',
+                'red' => '#cf222e',
+                'green' => '#1a7f37',
+                'yellow' => '#9a6700',
+                'blue' => '#0969da',
+                'magenta' => '#8250df',
+                'cyan' => '#1b7c83',
+                'white' => '#6e7781',
+            ],
+            'cyberpunk' => [
+                'background' => '#050505',
+                'foreground' => '#00ff9f',
+                'cursor' => '#00ff9f',
+                'cursorAccent' => '#050505',
+                'selectionBackground' => 'rgba(214, 0, 255, 0.3)',
+                'black' => '#121212',
+                'red' => '#ff0055',
+                'green' => '#00ff9f',
+                'yellow' => '#fcee0a',
+                'blue' => '#00f0ff',
+                'magenta' => '#d600ff',
+                'cyan' => '#00f0ff',
+                'white' => '#ffffff',
+            ],
+        ];
+
+        return $themes[$theme] ?? $themes['saturn'];
+    }
+
+    /**
      * Start a new ttyd session for an SSH connection
      */
-    public function startSession(Server $server): array
+    public function startSession(Server $server, ?string $theme = null): array
     {
         try {
-            $sessionId = 'ttyd_' . Str::uuid();
+            $sessionId = 'ttyd_'.Str::uuid();
             $port = $this->findAvailablePort();
+            $theme = $theme ?? 'saturn';
 
             if (! $port) {
                 return [
@@ -42,18 +121,23 @@ class TtydManager
             // Build the SSH command arguments
             $commandArgs = $this->buildSshCommand($server);
 
+            // Get theme configuration
+            $themeConfig = $this->getTerminalTheme($theme);
+            $themeJson = json_encode($themeConfig);
+
             // Use the start-ttyd.sh script to start ttyd completely detached
             $scriptPath = base_path('start-ttyd.sh');
 
-            if (!file_exists($scriptPath)) {
+            if (! file_exists($scriptPath)) {
                 throw new \Exception('start-ttyd.sh script not found');
             }
 
-            // Build the command: start-ttyd.sh <port> <ssh_command_args...>
+            // Build the command: start-ttyd.sh <port> <theme_json> <ssh_command_args...>
             $shellCommand = sprintf(
-                '/bin/bash %s %d %s 2>&1',
+                '/bin/bash %s %d %s %s 2>&1',
                 escapeshellarg($scriptPath),
                 $port,
+                escapeshellarg($themeJson),
                 implode(' ', array_map('escapeshellarg', $commandArgs))
             );
 
@@ -76,20 +160,21 @@ class TtydManager
                 $pid = (int) substr($output, 8);
             } else {
                 Log::error('Script failed', ['output' => $output]);
+
                 return [
                     'success' => false,
-                    'error' => 'Failed to start ttyd: ' . $output,
+                    'error' => 'Failed to start ttyd: '.$output,
                 ];
             }
 
             // Verify the port is listening
             usleep(300000); // 300ms
-            if (!$this->isPortListening($port)) {
+            if (! $this->isPortListening($port)) {
                 Log::warning('Port not listening after script, retrying...', ['port' => $port]);
                 usleep(500000); // Wait another 500ms
                 usleep(500000); // Wait another 500ms
 
-                if (!$this->isPortListening($port)) {
+                if (! $this->isPortListening($port)) {
                     return [
                         'success' => false,
                         'error' => 'ttyd failed to start - port not listening',
@@ -154,8 +239,9 @@ class TtydManager
 
         $process = proc_open($fullCommand, $descriptorspec, $pipes);
 
-        if (!is_resource($process)) {
+        if (! is_resource($process)) {
             Log::error('Failed to start process via proc_open');
+
             return 0;
         }
 
@@ -179,12 +265,14 @@ class TtydManager
 
         return $ttydPid ?: $pid;
     }
+
     /**
      * Find the PID of a running ttyd process
      */
     private function findTtydPid(): int
     {
-        $output = shell_exec("pgrep -n ttyd 2>/dev/null");
+        $output = shell_exec('pgrep -n ttyd 2>/dev/null');
+
         return $output ? (int) trim($output) : 0;
     }
 
@@ -197,7 +285,8 @@ class TtydManager
             return false;
         }
         $result = shell_exec("ps -p {$pid} -o pid= 2>/dev/null");
-        return !empty(trim($result ?? ''));
+
+        return ! empty(trim($result ?? ''));
     }
 
     /**
@@ -207,7 +296,8 @@ class TtydManager
     {
         // Use full path for lsof since PHP may have limited PATH
         $result = shell_exec("/usr/sbin/lsof -i :{$port} -P -n 2>/dev/null | /usr/bin/grep LISTEN");
-        return !empty(trim($result ?? ''));
+
+        return ! empty(trim($result ?? ''));
     }
 
     /**
@@ -231,6 +321,7 @@ class TtydManager
         // For development/testing - if localhost, use a local shell
         if ($server->host === 'localhost' || $server->host === '127.0.0.1') {
             Log::info('Using local shell for localhost connection');
+
             return ['/bin/bash'];
         }
 
@@ -238,7 +329,7 @@ class TtydManager
         $sshpassPath = trim(shell_exec('which sshpass 2>/dev/null') ?: '');
         if (empty($sshpassPath)) {
             // Try common locations
-            $commonPaths = ['/usr/bin/sshpass', '/usr/local/bin/sshpass', '/opt/homebrew/bin/sshpass', getenv('HOME') . '/bin/sshpass'];
+            $commonPaths = ['/usr/bin/sshpass', '/usr/local/bin/sshpass', '/opt/homebrew/bin/sshpass', getenv('HOME').'/bin/sshpass'];
             foreach ($commonPaths as $path) {
                 if (file_exists($path)) {
                     $sshpassPath = $path;
