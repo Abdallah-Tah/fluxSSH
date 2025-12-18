@@ -22,6 +22,46 @@ Route::view('about', 'about')->name('about');
 Route::view('contact', 'contact')->name('contact');
 Route::view('terms', 'terms')->name('terms');
 
+// Debug route to test mobile debugging
+Route::get('debug-test', function () {
+    \App\Services\MobileDebugger::debug(['test' => 'Mobile debugging works!', 'timestamp' => now()], 'Debug Test');
+    return response()->json(['message' => 'Debug logged - check storage/logs/mobile_debug.log']);
+})->name('debug.test');
+
+// Debug info page for mobile debugging
+Route::get('debug-info', function () {
+    $debugInfo = [
+        'timestamp' => now(),
+        'environment' => app()->environment(),
+        'nativephp_running' => config('nativephp-internal.running', false),
+        'debug_mode' => config('app.debug'),
+        'recent_logs' => [],
+        'session_data' => session()->all(),
+        'request_data' => request()->all(),
+        'platform_info' => [
+            'user_agent' => request()->userAgent(),
+            'is_mobile' => request()->header('User-Agent') ? str_contains(request()->header('User-Agent'), 'Mobile') : false,
+            'nativephp_platform' => getenv('NATIVEPHP_PLATFORM') ?: 'unknown',
+        ]
+    ];
+
+    // Get recent debug logs if they exist
+    $debugFile = storage_path('logs/mobile_debug.log');
+    if (file_exists($debugFile)) {
+        $logs = file($debugFile);
+        $debugInfo['recent_logs'] = array_slice($logs, -20); // Last 20 lines
+    }
+
+    // Get recent Laravel logs
+    $laravelLog = storage_path('logs/laravel.log');
+    if (file_exists($laravelLog)) {
+        $logs = file($laravelLog);
+        $debugInfo['recent_laravel_logs'] = array_slice($logs, -10); // Last 10 lines
+    }
+
+    return view('debug.info', compact('debugInfo'));
+})->name('debug.info');
+
 // Test Terminal (no auth required for demo)
 Route::get('test-terminal', [TestTerminalController::class, 'show'])->name('test-terminal');
 Route::post('test-terminal/start', [TestTerminalController::class, 'start'])->name('test-terminal.start');

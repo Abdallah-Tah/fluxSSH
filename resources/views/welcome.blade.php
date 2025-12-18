@@ -265,7 +265,9 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center relative z-10">
 
                     <!-- iPhone 17 Mockup -->
-                    <div class="relative mx-auto md:mx-0 w-[320px] h-[650px] bg-black rounded-[55px] shadow-2xl ring-8 ring-zinc-800 overflow-hidden">
+                    <div class="relative mx-auto md:mx-0 w-[320px] h-[650px]">
+                        <div class="absolute inset-0 rounded-[55px] ring-8 ring-zinc-800 pointer-events-none z-40"></div>
+                        <div class="relative w-full h-full bg-black rounded-[55px] shadow-2xl overflow-hidden">
                         
                         <!-- Dynamic Island -->
                         <div class="absolute top-3 left-1/2 -translate-x-1/2 w-[120px] h-[35px] bg-black rounded-full z-30 flex items-center justify-center gap-3 px-3">
@@ -360,6 +362,7 @@
                             <!-- Home Indicator -->
                             <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-white/20 rounded-full z-30"></div>
 
+                        </div>
                         </div>
                     </div>
 

@@ -5,7 +5,7 @@
         <!-- Session Status -->
         <x-auth-session-status class="text-center" :status="session('status')" />
 
-        <form method="POST" action="{{ route('password.email') }}" class="flex flex-col gap-6">
+        <form method="POST" action="{{ route('password.email') }}" enctype="multipart/form-data" class="flex flex-col gap-6">
             @csrf
 
             <!-- Email Address -->
@@ -25,7 +25,11 @@
 
         <div class="space-x-1 rtl:space-x-reverse text-center text-sm text-zinc-400">
             <span>{{ __('Or, return to') }}</span>
-            <flux:link :href="route('login')" wire:navigate>{{ __('log in') }}</flux:link>
+            @if (\App\Services\NativePHP\NativePlatform::isMobile())
+                <flux:link :href="route('login')">{{ __('log in') }}</flux:link>
+            @else
+                <flux:link :href="route('login')" wire:navigate>{{ __('log in') }}</flux:link>
+            @endif
         </div>
     </div>
 </x-layouts.auth>

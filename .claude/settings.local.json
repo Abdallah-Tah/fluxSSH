@@ -39,7 +39,17 @@
       "mcp__laravel-boost__get-absolute-url",
       "mcp__laravel-boost__get-config",
       "Bash(pkill:*)",
-      "Bash(/Users/amohamed/Herd/fluxSSH/start-ttyd.sh:*)"
+      "Bash(/Users/amohamed/Herd/fluxSSH/start-ttyd.sh:*)",
+      "Bash(adb devices:*)",
+      "Bash(export ANDROID_HOME=~/Library/Android/sdk)",
+      "Bash($ANDROID_HOME/platform-tools/adb devices -l)",
+      "Bash($ANDROID_HOME/emulator/emulator -list-avds)",
+      "Bash($ANDROID_HOME/platform-tools/adb shell getprop ro.build.version.sdk)",
+      "Bash($ANDROID_HOME/platform-tools/adb devices)",
+      "Bash($ANDROID_HOME/platform-tools/adb:*)",
+      "Bash(timeout 5 $ANDROID_HOME/platform-tools/adb:*)",
+      "Bash(./gradlew installDebug:*)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []

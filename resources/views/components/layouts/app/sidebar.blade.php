@@ -83,18 +83,30 @@
         </nav>
 
         <!-- User Section -->
-        <div class="border-t border-border-subtle p-4">
+        <div class="border-t border-border-subtle p-4 space-y-2">
             <div class="flex items-center gap-3 p-2 rounded-md hover:bg-bg-surface-alt transition-all duration-200 cursor-pointer group">
                 <div class="h-8 w-8 rounded-md bg-bg-surface-alt flex items-center justify-center text-xs font-bold text-text-secondary group-hover:text-text-primary">
-                    {{ auth()->user()->initials() }}
+                    {{ auth()->user()?->initials() ?? '?' }}
                 </div>
                 <div class="flex-1 min-w-0">
                     <p class="text-sm font-medium text-text-primary truncate">
-                        {{ auth()->user()->name }}
+                        {{ auth()->user()?->name ?? 'Guest' }}
                     </p>
-                    <p class="text-[11px] text-text-tertiary truncate">{{ auth()->user()->email }}</p>
+                    <p class="text-[11px] text-text-tertiary truncate">{{ auth()->user()?->email ?? 'Not logged in' }}</p>
                 </div>
             </div>
+
+            @auth
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <button type="submit" class="w-full flex items-center gap-2 px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-surface-alt rounded-md transition-all duration-200">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                    </svg>
+                    Logout
+                </button>
+            </form>
+            @endauth
         </div>
     </aside>
 
@@ -104,7 +116,7 @@
             <span class="text-lg font-bold text-text-primary">FluxSSH</span>
         </div>
         <div class="h-8 w-8 rounded-full bg-bg-surface-alt flex items-center justify-center text-xs font-bold text-text-primary">
-            {{ auth()->user()->initials() }}
+            {{ auth()->user()?->initials() ?? '?' }}
         </div>
     </div>
 
