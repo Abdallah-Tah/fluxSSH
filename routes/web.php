@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\RealtimeTerminalController;
 use App\Http\Controllers\SimpleTerminalController;
 use App\Http\Controllers\TestTerminalController;
@@ -22,9 +24,23 @@ Route::view('about', 'about')->name('about');
 Route::view('contact', 'contact')->name('contact');
 Route::view('terms', 'terms')->name('terms');
 
+// Authentication Routes
+Route::middleware('guest')->group(function () {
+    Route::get('register', [RegisteredUserController::class, 'create'])->name('register');
+    Route::post('register', [RegisteredUserController::class, 'store']);
+
+    Route::get('login', [AuthenticatedSessionController::class, 'create'])->name('login');
+    Route::post('login', [AuthenticatedSessionController::class, 'store']);
+});
+
+Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
+    ->middleware('auth')
+    ->name('logout');
+
 // Debug route to test mobile debugging
 Route::get('debug-test', function () {
     \App\Services\MobileDebugger::debug(['test' => 'Mobile debugging works!', 'timestamp' => now()], 'Debug Test');
+
     return response()->json(['message' => 'Debug logged - check storage/logs/mobile_debug.log']);
 })->name('debug.test');
 
@@ -42,7 +58,7 @@ Route::get('debug-info', function () {
             'user_agent' => request()->userAgent(),
             'is_mobile' => request()->header('User-Agent') ? str_contains(request()->header('User-Agent'), 'Mobile') : false,
             'nativephp_platform' => getenv('NATIVEPHP_PLATFORM') ?: 'unknown',
-        ]
+        ],
     ];
 
     // Get recent debug logs if they exist
